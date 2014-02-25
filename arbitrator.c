@@ -10,7 +10,6 @@
 #include "order.h"
 #include "region.h"
 
-
 //Creating sample output from the controllers
 // Sending string (bytes)
 // Player Num (1) / Order (1) / Unit Location (3) / [To Country (3)]
@@ -28,8 +27,13 @@ usage(char *prog)
 int
 main(int argc, char *argv[])
 {
-  char tmp[] = { "/tmp/outfile"};
-  genOrders(2, tmp);
+  genOrders(2,2,"/tmp/outfile");
+  genStart("/tmp/startdata");
+
+  printf("Test the global pointers...\r\n");
+
+
+
 
 // Setup Board -- TODO make legit tmp files
 //   char *inFile   = "/no/such/file";

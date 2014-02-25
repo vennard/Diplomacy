@@ -16,108 +16,86 @@
 // Orders: 0 - Hold, 1 - Move, 2 - Support, 3 - Convoy
 // BY DEFAULT -1 represents no country (invalid)
 
-
-//Legacy -- Replacing with integers [0-47]
-char* orders[] = {"ode", "str", "cop", "kat", "ska", "vis", "dan", "sba",
-                 "ron", "hab", "mal", "bol", "got", "war", "wkr", "kon",
-                 "mba", "sli", "gos", "vat", "bre", "min", "nar", "rig",
-  "gor", "saa", "nba", "sto", "sil", "wes", "tal", "gof",
-                 "hel", "sgo", "sun", "stj", "keb", "stp", "sai", "kuo",
-"vas", "ngo", "tor", "kuy", "oul", "ima","van","lla" };
-void
-usage_testorders(char *prog)
-{
-   fprintf(stderr, "usage: %s <-s random seed> <-n number of orders> <-o output file>\n", prog);
-   exit(1);
-}
-
-int genOrders(int argc, char argv[]) {
-order_t r;
-   int* ptr;
-   ptr = (int *) malloc(sizeof(r));
-
-   // arguments
-   int randomSeed  = 0;
+int genOrders(int seed, int numOrders, char out[]) {
+   char *outFile   = "/tmp/outfile";
    int ordersLeft = 0;
-   char *outFile   = "/no/such/file";
+	int sd = 0;
+   int* ptr;
+	order_t r;
 
-   // input params
-   int c;
-   opterr = 0;
-   while ((c = getopt(argc, &argv, "n:s:o:")) != -1) {
-switch (c) {
-case 'n':
-   ordersLeft = atoi(optarg);
-   break;
-case 's':
-   randomSeed  = atoi(optarg);
-   break;
-case 'o':
-   outFile     = strdup(optarg);
-   break;
-default:
-   usage_testorders(&argv[0]);
-}
+   ptr = (int *) malloc(sizeof(r));
+	printf("Called genOrders...\r\n");
+
+	if (strlen(out) < 1) {
+		printf("No outfile set, resorting to default /tmp/outfile\r\n");
+	} else {
+	  outFile = out;
+   }
+
+	if (seed < 1) {
+		printf("Seed set was negative! Setting to 1.. \r\n");
+	} else {
+	  sd = seed; 
+	}
+
+	if (numOrders < 1) {
+		printf("No orders set... thats not very adventurous - exiting\r\n");
+		return 0;
+	} else {
+	  ordersLeft = numOrders;
    }
 
    // seed random number generator
-   srand(randomSeed);
+   srand(sd);
 
    // open and create output file
    int fd = open(outFile, O_WRONLY|O_CREAT|O_TRUNC, S_IRWXU);
    if (fd < 0) {
-  perror("open");
-  exit(1);
+  		perror("open");
+  		return 1;
    }
 
    int i;
    for (i = 0; i < ordersLeft; i++) {
-     //Get random player
-     r.player = rand() % 4;
-     //Get random order
-     int order_num = rand() % 4;
-r.order = order_num;
-//Get random type (Fleet or Army)
-r.type = rand() % 2;
-//Get random home country
-r.country = rand() % 48;
-//Set to country and support country based on order
-int tc = rand() % 48;
-int sc = rand() % 48;
-if (order_num == 0) {
-//hold
-r.tcountry = -1;
-r.scountry = -1;
-}else if (order_num == 1) {
-  //move
-r.tcountry = tc;
-r.scountry = -1;
-}else if (order_num == 2) {
-//support
-r.tcountry = tc;
-r.scountry = sc;
-}else if (order_num == 3) {
-//convoy
-r.tcountry = tc;
-r.scountry = sc;
-}
-//Print output
-printf("%i: Player - %i, Order - %i, Army/Fleet - %i, Country - %i, ",i,r.player,r.order,r.type,r.country);
-printf("To Country - %i, Support Country - %i.\r\n",r.tcountry,r.scountry);
+      r.player = rand() % 4;
+      int order_num = rand() % 4;
+		r.order = order_num;
+		//Get random type (Fleet or Army)
+		r.type = rand() % 2;
+		//Get random home country
+		r.country = rand() % 48;
+		//Set to country and support country based on order
+		int tc = rand() % 48;
+		int sc = rand() % 48;
+		if (order_num == 0) {
+			//hold
+			r.tcountry = -1;
+			r.scountry = -1;
+		} else if (order_num == 1) {
+  			//move
+			r.tcountry = tc;
+			r.scountry = -1;
+		} else if (order_num == 2) {
+			//support
+			r.tcountry = tc;
+			r.scountry = sc;
+		} else if (order_num == 3) {
+			//convoy
+			r.tcountry = tc;
+			r.scountry = sc;
+		}
+		//Print output
+		printf("%i: Player - %i, Order - %i, Army/Fleet - %i, Country - %i, ",i,r.player,r.order,r.type,r.country);
+		printf("To Country - %i, Support Country - %i.\r\n",r.tcountry,r.scountry);
 
-
-     int rc = write(fd, &r, sizeof(r));
-  if (rc != sizeof(r)) {
-     perror("write");
-     exit(1);
-  }
+     	int rc = write(fd, &r, sizeof(r));
+  		if (rc != sizeof(r)) {
+      	perror("write");
+     		return 1;
+  		}
    }
-
-
-   
    // ok to ignore error code here, because we're done anyhow...
    (void) close(fd);
-
    free(ptr);
    return 0;
 }

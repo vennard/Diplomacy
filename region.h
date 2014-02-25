@@ -1,6 +1,7 @@
 #ifndef __region_h__
 #define __region_h__
 
+
 typedef struct __region_t {
 		  int name; //Countries represented by integers - see gdrive
 		  int type; //0 - Inland, 1 - Coastal, 2 - Water
@@ -9,6 +10,8 @@ typedef struct __region_t {
 		  int player; //-1 means no unit present(0 - Poland, 1 - Russia, 2 - Sweden, 3 - Finland)
 		  int ncountrys[12]; //neighbouring countries(represented by ints)
 } region_t;
+
+int genStart(char outfile[]);
 
 #endif
 /*

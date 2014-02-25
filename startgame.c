@@ -11,11 +11,6 @@
 
 region_t r[48];
 
-void usage_startgame(char *prog) {
-fprintf(stderr, "usage: %s <-o output file>\n",prog);
-exit(1);
-}
-
 //Case statement for start data
 //name, type, supply, player, ncountrys
 //Player codes: 0 - Poland, 1 - Russia, 2 - Sweden, 3 - Finland
@@ -654,72 +649,66 @@ return 0;
 }
 
 
-
 //Creating output for the start condition of the game
-int startgamegen(int argc, char *argv[]) {
-int* ptr;
-ptr = (int *) malloc(sizeof(r));
+int genStart(char out[]) {
+	char* outfile = "/tmp/startgame";
+	int* ptr;
 
-char* outfile = "/no/such/file";
+	ptr = (int *) malloc(sizeof(r));
 
-//get input params
-int c;
-   opterr = 0;
-   while ((c = getopt(argc, argv, "o:")) != -1) {
-switch (c) {
-case 'o':
-  outfile     = strdup(optarg);
-  break;
-default:
-  usage_startgame(argv[0]);
-}
-   }
+	printf("Beginning start game generation... \r\n");
+	if (strlen(outfile) < 0) {
+  		printf("No outfile set for game start data, resorting to /tmp/startgame\r\n");
+	} else {
+  		outfile = out;
+	}
 
-//open and create output file
+	//open and create output file
    int fd = open(outfile, O_WRONLY|O_CREAT|O_TRUNC, S_IRWXU);
    if (fd < 0) {
-  perror("open");
-  exit(1);
+  		perror("open");
+  		exit(1);
    }
 
-//Load up start data
-//Just start data for 4 players supported now
-int a=0;
-for(a=0; a < 48;a++) {
-if (start_data(a) == -1) {
-fprintf(stderr,"Something went wrong calling start_data()\r\n");
-exit(1);
-}
-}
+	//Load up start data
+	//Just start data for 4 players supported now
+	int a=0;
+	for(a=0; a < 48;a++) {
+		if (start_data(a) == -1) {
+		fprintf(stderr,"Something went wrong calling start_data()\r\n");
+		exit(1);
+		}
+	}
 
+	int i=0;
+	for(i=0; i < 48;i++) {
+  		region_t t;
+		t = r[i];
+		//DEBUG OUTPUT
+		printf("Region %i: ",i);
+		printf("name- %i ",t.name);
+		printf("type- %i ",t.type); 
+		printf("occupy_type- %i ",t.occupy_type); 
+		printf("supply- %i ",t.supply);
+		printf("player- %i ",t.player);
+		int size = sizeof(t.ncountrys) / (sizeof(int));
+		int k;
+		printf("neighbours: ");
+		for(k=0;k<size;k++){
+			printf(" %i,",t.ncountrys[k]);
+		}
+		printf("\r\n");
 
-int i=0;
-for(i=0; i < 48;i++) {
-  region_t t;
-t = r[i];
-//DEBUG OUTPUT
-printf("Region %i: ",i);
-printf("name- %i ",t.name);
-printf("type- %i ",t.type); printf("occupy_type- %i ",t.occupy_type); printf("supply- %i ",t.supply);
-printf("player- %i ",t.player);
-int size = sizeof(t.ncountrys) / (sizeof(int));
-int k;
-printf("neighbours: ");
-for(k=0;k<size;k++){
-printf(" %i,",t.ncountrys[k]);
-}
-printf("\r\n");
+		//Print out to file
+		int rc = write(fd, &r, sizeof(r));
+		if (rc != sizeof(r)) {
+     		perror("write");
+     		exit(1);
+  		}
+   }
 
-//Print out to file
-int rc = write(fd, &r, sizeof(r));
-if (rc != sizeof(r)) {
-     perror("write");
-     exit(1);
-  }
-    }
-
-(void) close(fd);
-free(ptr);
-return 0;
+	(void) close(fd);
+	free(ptr);
+	return 0;
 }
 

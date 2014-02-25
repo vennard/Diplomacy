@@ -2,6 +2,7 @@
 #define __order_h__
 
 typedef struct __order_t {
+  		  int valid; // TO BE SET BY ARBITRATOR
 		  int player;
 		  int order;
 		  int type; //0 - army 1 - fleet
@@ -11,6 +12,6 @@ typedef struct __order_t {
 		  						 //-1 if not a support order
 } order_t;
 
-int genOrders(int argc, char outfile[]);
+int genOrders(int seed,int numOrders, char outfile[]);
 
 #endif
