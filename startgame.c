@@ -638,7 +638,6 @@ int genStart(char out[]) {
 		t = r[i];
 		//DEBUG OUTPUT
 		printf("Region %i: ",i);
-		printf("name- %i ",i);
 		printf("type- %i ",t.type); 
 		printf("occupy_type- %i ",t.occupy_type); 
 		printf("supply- %i ",t.supply);

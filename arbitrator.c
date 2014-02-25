@@ -28,7 +28,7 @@ int loadgamedata(char f[]) {
   		exit(1);
    }
 	if (read(fd,g,sizeof(g)) < 0) perror("read");
-	printf("Read success, first 35 occupy type= %d\r\n",g[35].occupy_type);
+	printf("Read success!\r\n");
 	return 0;
 }
 
