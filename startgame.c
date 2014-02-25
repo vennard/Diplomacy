@@ -20,7 +20,6 @@ int start_data(int i) {
 int j;
 switch (i) {
 case 0: //ode
-  r[i].name = i;
 r[i].type = 0;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -30,7 +29,6 @@ r[i].ncountrys[1] = 1; //vis
 for (j=2;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 1: //vis
-  r[i].name = i ;
 r[i].type = 0;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -43,7 +41,6 @@ r[i].ncountrys[4] = 2; //war
 for (j=5;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 2: //war
-  r[i].name = i;
 r[i].type = 0;
 r[i].occupy_type = 0;
 r[i].supply = 1;
@@ -55,7 +52,6 @@ r[i].ncountrys[3] = 3; //bre
 for (j=4;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 3: //bre
-  r[i].name = i;
 r[i].type = 0;
 r[i].occupy_type = -1;
 r[i].supply = 1;
@@ -66,7 +62,6 @@ r[i].ncountrys[2] = 4; //min
 for (j=3;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 4: //min
-  r[i].name = i;
 r[i].type = 0;
 r[i].occupy_type = 0;
 r[i].supply = 1;
@@ -77,7 +72,6 @@ r[i].ncountrys[2] = 9; //wes
 for (j=3;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 5: //str
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = 1;
 r[i].supply = 1;
@@ -90,7 +84,6 @@ r[i].ncountrys[4] = 12; //sba
 for (j=5;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 6: //dan
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = 1;
   r[i].supply = 1;
@@ -103,7 +96,6 @@ r[i].ncountrys[4] = 12; //sba
 for (j=5;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 7: //wkr
-  r[i].name = i;
 r[i].type = 0;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -116,7 +108,6 @@ r[i].ncountrys[4] = 12; //sba
 for (j=5;j<12;j++) r[i].ncountrys[j] = -1;
 break;
   case 8: //nar
-  r[i].name = i;
 r[i].type = 0;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -130,7 +121,6 @@ r[i].ncountrys[5] = 4; //min
 for (j=6;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 9: //wes
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -143,7 +133,6 @@ r[i].ncountrys[4] = 18; //stp
 for (j=5;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 10: //kat
-  r[i].name = i;
 r[i].type = 2;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -158,7 +147,6 @@ r[i].ncountrys[6] = 12; //sba
 for (j=7;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 11: //cop
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = -1;
 r[i].supply = 1;
@@ -167,7 +155,6 @@ r[i].ncountrys[0] = 10; //kat
 for (j=1;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 12: //sba
-  r[i].name = i;
 r[i].type = 2;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -183,7 +170,6 @@ r[i].ncountrys[7] = 6; //dan
 for (j=8;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 13: //mba
-  r[i].name = i;
 r[i].type = 2;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -198,7 +184,6 @@ r[i].ncountrys[6] = 14; //kon
 for (j=7;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 14: //kon
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = -1;
 r[i].supply = 1;
@@ -212,7 +197,6 @@ r[i].ncountrys[5] = 7; //wkr
 for (j=6;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 15: //ron
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = -1;
 r[i].supply = 1;
@@ -222,7 +206,6 @@ r[i].ncountrys[1] = 16; //hab
 for (j=2;j<12;j++) r[i].ncountrys[j] = -1;
   break;
   case 16: //hab
-r[i].name = i;
 r[i].type = 2;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -236,7 +219,6 @@ r[i].ncountrys[5] = 13; //mba
 for (j=6;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 17: //rig
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = 1;
 r[i].supply = 1;
@@ -251,7 +233,6 @@ r[i].ncountrys[6] = 14; //kon
 for (j=7;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 18: //stp
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = 1;
 r[i].supply = 1;
@@ -264,7 +245,6 @@ r[i].ncountrys[4] = 39; //sai
 for (j=5;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 19: //tal
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = -1;
 r[i].supply = 1;
@@ -277,7 +257,6 @@ r[i].ncountrys[4] = 9; //wes
 for (j=5;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 20: //gor
-  r[i].name = i;
 r[i].type = 2;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -289,7 +268,6 @@ r[i].ncountrys[3] = 17; //rig
 for (j=4;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 21: //saa
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = -1;
 r[i].supply = 1;
@@ -299,7 +277,6 @@ r[i].ncountrys[1] = 22; //nba
 for (j=2;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 22: //nba
-  r[i].name = i;
 r[i].type = 2;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -318,7 +295,6 @@ r[i].ncountrys[10] = 17; //rig
 for (j=11;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 23: //sli
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = -1;
 r[i].supply = 1;
@@ -329,7 +305,6 @@ r[i].ncountrys[2] = 22; //nba
 for (j=3;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 24: //gos
-  r[i].name = i;
 r[i].type = 2;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -345,7 +320,6 @@ r[i].ncountrys[7] = 16; //hab
 for (j=8;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 25: //bol
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -360,7 +334,6 @@ r[i].ncountrys[6] = 16; //hab
 for (j=7;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 26: //mal
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = -1;
 r[i].supply = 1;
@@ -372,7 +345,6 @@ r[i].ncountrys[3] = 12; //sba
 for (j=4;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 27: //ska
-  r[i].name = i;
 r[i].type = 2;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -382,7 +354,6 @@ r[i].ncountrys[1] = 28; //got
 for (j=2;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 28: //got
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = 1;
 r[i].supply = 1;
@@ -395,7 +366,6 @@ r[i].ncountrys[4] = 30; //sil
 for (j=5;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 29: //van
-  r[i].name = i;
 r[i].type = 2;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -405,7 +375,6 @@ r[i].ncountrys[1] = 23; //sil
 for (j=2;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 30: //sil
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -419,7 +388,6 @@ r[i].ncountrys[5] = 43; //stj
 for (j=6;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 31: //sto
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = 1;
 r[i].supply = 1;
@@ -432,7 +400,6 @@ r[i].ncountrys[4] = 24; //gos
 for (j=5;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 32: //ala
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = -1;
 r[i].supply = 1;
@@ -443,7 +410,6 @@ r[i].ncountrys[2] = 22; //nba
 for (j=3;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 33: //sgo
-  r[i].name = i;
 r[i].type = 2;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -459,7 +425,6 @@ r[i].ncountrys[7] = 22; //nba
 for (j=8;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 34: //hel
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = 1;
 r[i].supply = 1;
@@ -473,7 +438,6 @@ r[i].ncountrys[5] = 35; //gof
 for (j=6;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 35: //gof
-  r[i].name = i;
 r[i].type = 2;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -487,7 +451,6 @@ r[i].ncountrys[5] = 19; //tal
 for (j=6;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 36: //lla
-  r[i].name = i;
 r[i].type = 2;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -499,7 +462,6 @@ r[i].ncountrys[3] = 37; //kuy
 for (j=4;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 37: //kuy
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -511,7 +473,6 @@ r[i].ncountrys[3] = 18; //stp
 for (j=4;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 38: //kuo
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = 0;
 r[i].supply = 1;
@@ -526,7 +487,6 @@ r[i].ncountrys[6] = 37; //kuy
 for (j=7;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 39: //sai
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -539,7 +499,6 @@ r[i].ncountrys[4] = 37; //kuo
 for (j=5;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 40: //vas
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = 1;
 r[i].supply = 1;
@@ -552,7 +511,6 @@ r[i].ncountrys[4] = 38; //kuo
 for (j=5;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 41: //ngo
-  r[i].name = i;
 r[i].type = 2;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -566,7 +524,6 @@ r[i].ncountrys[5] = 40; //vas
 for (j=6;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 42: //sun
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = 1;
 r[i].supply = 1;
@@ -580,7 +537,6 @@ r[i].ncountrys[5] = 31; //sto
 for (j=6;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 43: //stj
-  r[i].name = i;
 r[i].type = 0;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -591,7 +547,6 @@ r[i].ncountrys[2] = 44; //keb
 for (j=3;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 44: //keb
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -603,7 +558,6 @@ r[i].ncountrys[3] = 41; //ngo
 for (j=4;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 45: //tor
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = -1;
 r[i].supply = 1;
@@ -615,7 +569,6 @@ r[i].ncountrys[3] = 41; //ngo
 for (j=4;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 46: //oul
-  r[i].name = i;
 r[i].type = 1;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -628,7 +581,6 @@ r[i].ncountrys[4] = 40; //vas
 for (j=5;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 47: //ima
-  r[i].name = i;
 r[i].type = 0;
 r[i].occupy_type = -1;
 r[i].supply = 0;
@@ -686,7 +638,7 @@ int genStart(char out[]) {
 		t = r[i];
 		//DEBUG OUTPUT
 		printf("Region %i: ",i);
-		printf("name- %i ",t.name);
+		printf("name- %i ",i);
 		printf("type- %i ",t.type); 
 		printf("occupy_type- %i ",t.occupy_type); 
 		printf("supply- %i ",t.supply);
