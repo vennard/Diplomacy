@@ -1,4 +1,4 @@
-nclude <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -11,7 +11,7 @@ nclude <stdio.h>
 
 region_t r[48];
 
-void usage(char *prog) {
+void usage_startgame(char *prog) {
 fprintf(stderr, "usage: %s <-o output file>\n",prog);
 exit(1);
 }
@@ -656,7 +656,7 @@ return 0;
 
 
 //Creating output for the start condition of the game
-int main(int argc, char *argv[]) {
+int startgamegen(int argc, char *argv[]) {
 int* ptr;
 ptr = (int *) malloc(sizeof(r));
 
@@ -671,7 +671,7 @@ case 'o':
   outfile     = strdup(optarg);
   break;
 default:
-  usage(argv[0]);
+  usage_startgame(argv[0]);
 }
    }
 

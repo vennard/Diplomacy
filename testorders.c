@@ -1,4 +1,4 @@
-nclude <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -16,6 +16,7 @@ nclude <stdio.h>
 // Orders: 0 - Hold, 1 - Move, 2 - Support, 3 - Convoy
 // BY DEFAULT -1 represents no country (invalid)
 
+
 //Legacy -- Replacing with integers [0-47]
 char* orders[] = {"ode", "str", "cop", "kat", "ska", "vis", "dan", "sba",
                  "ron", "hab", "mal", "bol", "got", "war", "wkr", "kon",
@@ -24,15 +25,13 @@ char* orders[] = {"ode", "str", "cop", "kat", "ska", "vis", "dan", "sba",
                  "hel", "sgo", "sun", "stj", "keb", "stp", "sai", "kuo",
 "vas", "ngo", "tor", "kuy", "oul", "ima","van","lla" };
 void
-usage(char *prog)
+usage_testorders(char *prog)
 {
    fprintf(stderr, "usage: %s <-s random seed> <-n number of orders> <-o output file>\n", prog);
    exit(1);
 }
 
-int
-main(int argc, char *argv[])
-{
+int genOrders(int argc, char argv[]) {
 order_t r;
    int* ptr;
    ptr = (int *) malloc(sizeof(r));
@@ -45,7 +44,7 @@ order_t r;
    // input params
    int c;
    opterr = 0;
-   while ((c = getopt(argc, argv, "n:s:o:")) != -1) {
+   while ((c = getopt(argc, &argv, "n:s:o:")) != -1) {
 switch (c) {
 case 'n':
    ordersLeft = atoi(optarg);
@@ -57,7 +56,7 @@ case 'o':
    outFile     = strdup(optarg);
    break;
 default:
-   usage(argv[0]);
+   usage_testorders(&argv[0]);
 }
    }
 
