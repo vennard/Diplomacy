@@ -20,8 +20,7 @@
 
 
 region_t g[48];
-char fgdata[] = {"/tmp/gamedata"};
-char forders[] = {"/tmp/outfile"};
+order_t o[512];
 int loadgamedata(char f[]) {
    int fd = open(f, O_RDONLY);
    if (fd < 0) {
@@ -48,25 +47,32 @@ int startnewgame(int num) {
 	return 0;
 }
   
-
-int main(int argc, char *argv[]) {
-	genOrders(2,2,forders);
-	genStart(fgdata);
-	printf("Start of Testing...\r\n");
-	startnewgame(0);
-
-	
-
-	/*
-	// open game orders file
-   int fd1 = open(forders, O_RDONLY);
+int getTestOrders(int seed, int numOrders, char f[]) {
+	printf("Generating random test orders!\r\n");
+	genOrders(seed,numOrders,f);
+   int fd1 = open(f, O_RDONLY);
    if (fd1 < 0) {
   		perror("read");
-  		exit(1);
+		return 1;
    }
-	*/
+	//get size of file
+	struct stat st;
+	fstat(fd1,&st);
+	int size = st.st_size;
+	if (read(fd1, o, size) < 0) {
+	  printf("Reading orders failed!\r\n");
+	  return 1;
+	}
+	return 0;
+}
 
-
+char fgdata[] = {"/tmp/gamedata"};
+char forders[] = {"/tmp/outfile"};
+int main(int argc, char *argv[]) {
+	printf("Start of Testing...\r\n");
+	startnewgame(0);
+	getTestOrders(2,2,forders);
+	//Check if order is valid
 
    return 0;
 }
