@@ -632,6 +632,7 @@ int genStart(char out[]) {
 		}
 	}
 
+		/*
 	int i=0;
 	for(i=0; i < 48;i++) {
   		region_t t;
@@ -650,13 +651,14 @@ int genStart(char out[]) {
 		}
 		printf("\r\n");
 
+   }
+		*/
 		//Print out to file
 		int rc = write(fd, &r, sizeof(r));
 		if (rc != sizeof(r)) {
      		perror("write");
      		exit(1);
   		}
-   }
 
 	(void) close(fd);
 	free(ptr);

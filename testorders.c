@@ -24,7 +24,7 @@ int genOrders(int seed, int numOrders, char out[]) {
 	order_t r;
 
    ptr = (int *) malloc(sizeof(r));
-	printf("Called genOrders...\r\n");
+	printf("Generating %i Orders..\r\n",numOrders);
 
 	if (strlen(out) < 1) {
 		printf("No outfile set, resorting to default /tmp/outfile\r\n");
@@ -85,8 +85,10 @@ int genOrders(int seed, int numOrders, char out[]) {
 			r.scountry = sc;
 		}
 		//Print output
+		/*
 		printf("%i: Player - %i, Order - %i, Army/Fleet - %i, Country - %i, ",i,r.player,r.order,r.type,r.country);
 		printf("To Country - %i, Support Country - %i.\r\n",r.tcountry,r.scountry);
+		*/
 
      	int rc = write(fd, &r, sizeof(r));
   		if (rc != sizeof(r)) {

@@ -4,7 +4,7 @@
 typedef struct __order_t {
   		  int valid; // TO BE SET BY ARBITRATOR
 		  int player;
-		  int order;
+		  int order; // Orders: 0 - Hold, 1 - Move, 2 - Support, 3 - Convoy
 		  int type; //0 - army 1 - fleet
 		  int country; //players country -- see below for table
 		  int tcountry; // destination country for move or support (this is support players destination)
