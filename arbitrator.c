@@ -21,6 +21,9 @@
 
 region_t g[48];
 order_t o[MAX_ORDERS];
+static int validOrders = 0;
+int numO;
+
 int loadgamedata(char f[]) {
    int fd = open(f, O_RDONLY);
    if (fd < 0) {
@@ -67,14 +70,8 @@ int getTestOrders(int seed, int numOrders, char f[]) {
 	return numOrders;
 }
 
-char fgdata[] = {"/tmp/gamedata"};
-char forders[] = {"/tmp/outfile"};
-int main(int argc, char *argv[]) {
-   if (argc > 3) perror("too many args");
-	printf("Starting the Arbitrator...\r\n");
-	startnewgame(0);
-	int numO = getTestOrders(5,5000,forders);
-	int validOrders = 0;
+//First Run through validation check
+int firstvalidate(void) {
 	//Check if order is valid
 	int i;
 	printf("Start of Testing with %i orders!...\r\n",numO);
@@ -110,6 +107,28 @@ int main(int argc, char *argv[]) {
 			k++;
 		}
 		if (validtcountry != 1) continue;
+		//Order is a convoy
+		int sc = o[i].scountry;
+		if (o[i].order == 3) {
+			//check that scountry has a unit
+			if (g[sc].occupy_type == -1) continue;	
+			//check that scountry has correct unit type
+			if (g[sc].type == 2) continue;  
+			//check that tcountry is correct type 
+			if (g[tc].type == 2) continue;
+			//check that scountry (location of land unit to be moved) is valid
+			int validconvoy = 0;
+			int a = 0;
+			while (nc[a] != -1) {
+				if (nc[a] == sc) validconvoy = 1;	
+			  	a++;
+			}
+			if (!validconvoy) continue; 
+			printf("Order #%i which is a convoy is valid!\r\n",i);
+			validOrders++;
+			o[i].valid = 1;
+			continue;
+		}
 		//check that target country is correct type
 		int validtype = 0;
 		if (t == 0) {   	//if land unit
@@ -135,7 +154,6 @@ int main(int argc, char *argv[]) {
 		//Order is a support
 		if (o[i].order == 2) {
 		  //check that target country is neighbor of support country
-		  int sc = o[i].scountry;
 		  int f = 0;
 		  int validsupport = 0;
 		  nc = g[tc].ncountrys;
@@ -152,9 +170,6 @@ int main(int argc, char *argv[]) {
 				continue;
 		  }
 		}
-		//Order is a convoy
-		if (o[i].order == 3) {
-		}
 
 	}
 	printf("Number of valid orders after 1st validation = %i\r\n",validOrders);
@@ -165,5 +180,16 @@ int main(int argc, char *argv[]) {
 		printf("To Country - %i, Support Country - %i.\r\n",o[j].tcountry,o[j].scountry);
 	  }
 	}
+	return validOrders;
+}
+
+char fgdata[] = {"/tmp/gamedata"};
+char forders[] = {"/tmp/outfile"};
+int main(int argc, char *argv[]) {
+   if (argc > 3) perror("too many args");
+	printf("Starting the Arbitrator...\r\n");
+	startnewgame(0);
+	numO = getTestOrders(8,8000,forders);
+	if (firstvalidate() == -1) perror("first validate failed");
    return 0;
 }
