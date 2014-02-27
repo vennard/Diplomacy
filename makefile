@@ -1,5 +1,5 @@
-HEADERS = order.h region.h resolutions.h
-OBJECTS = arbitrator.c testorders.c startgame.c
+HEADERS = order.h region.h include.h
+OBJECTS = arbitrator.c testorders.c startgame.c resources.c
 
 default: arbitrator 
 
