@@ -3,6 +3,7 @@
 
 typedef struct __order_t {
   		  int valid; // TO BE SET BY ARBITRATOR
+          int confirmed;
 		  int player;
 		  int order; // Orders: 0 - Hold, 1 - Move, 2 - Support, 3 - Convoy
 		  int type; //0 - army 1 - fleet

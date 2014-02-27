@@ -76,17 +76,45 @@ int isneighbor(int c, int *nc) {
 int firstvalidate(void) {
 	//Check if order is valid
 	int i;
-	printf("Start of Testing with %i orders!...\r\n",numO);
+	printf("Start of 1st Round validation with %i orders!...\r\n",numO);
 	for (i = 0;i < numO;i++) {
-	  	//Check that player has unit at order location (country)
 	  	int p = o[i].player;
 	  	int c = o[i].country;
-	  	if (g[c].player != p) {
+		int t = o[i].type;
+		int tc = o[i].tcountry;
+		int sc = o[i].scountry;
+	  	if (g[c].player != p) continue; //Player doesn't match 
+        if (g[c].occupy_type == -1) continue; //Region doesn't have unit
+
+        int or = o[i].order;
+        switch (or) {
+            case 0 : //hold
+                break;
+            case 1 : //move
+                break;
+            case 2 : //support
+                break;
+            case 3 : //convoy
+                if (g[c].occupy_type == 0) { //land units convoy order
+                    if (g[c].type != 1) continue;
+                } else if (g[c].occupy_type == 1) { //fleets convoy order
+                    if (g[c].type != 2) continue;
+                } else {
+                    continue;
+                }
+
+                break;
+            default :
+                break;
+        }
+
+    }
+
+        /*
 	  		//printf("Order #%i: Player does not have unit at orders country! \r\n",i);
 			continue;
 		} 
 		//Check that region type is correct
-		int t = o[i].type;
 		if (t != g[c].occupy_type) {
 	  		//printf("Order #%i: Troop type does not match! \r\n",i);
 			continue;
@@ -99,11 +127,9 @@ int firstvalidate(void) {
 			continue;
 		}
 		//check that target country is a neighbor of troop country
-		int tc = o[i].tcountry;
         if (!isneighbor(tc, g[c].ncountrys)) continue;
        
 		//Order is a convoy
-		int sc = o[i].scountry;
 		if (o[i].order == 3) {
 			//check that scountry has a unit
 			if (g[sc].occupy_type == -1) continue;	
@@ -176,4 +202,6 @@ int firstvalidate(void) {
 	  }
 	}
 	return validOrders;
+    */
+    return 0;
 }

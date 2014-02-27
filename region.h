@@ -9,6 +9,9 @@ typedef struct __region_t {
 		  int supply; //0 - no, 1 - yes
 		  int player; //-1 means no unit present(0 - Poland, 1 - Russia, 2 - Sweden, 3 - Finland)
 		  int ncountrys[12]; //neighbouring countries(represented by ints)
+          //Below to be set and used by arbitrator
+          int aS; //attack strength 
+          int dS; //defense strength
 } region_t;
 
 int genStart(char outfile[]);
