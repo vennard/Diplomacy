@@ -23,8 +23,7 @@ char fgdata[] = {"/tmp/gamedata"};
 char forders[] = {"/tmp/outfile"};
 int arbitor() {
 	printf("Starting the Arbitrator...\r\n");
-	startnewgame(0);
-	numO = getTestOrders(8,8000,forders);
-	if (firstvalidate() == -1) perror("first validate failed");
+	//if (firstvalidate() == -1) perror("first validate failed");
+
    return 0;
 }

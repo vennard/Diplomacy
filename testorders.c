@@ -32,7 +32,7 @@ int genOrders(int seed, int numOrders, char out[]) {
 	  outFile = out;
    }
 
-	if (seed < 1) {
+	if (seed < 0) {
 		printf("Seed set was negative! Setting to 1.. \r\n");
 	} else {
 	  sd = seed; 

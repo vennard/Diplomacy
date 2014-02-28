@@ -70,52 +70,64 @@ int main(int argc, char *argv[]) {
 
     while (gameRunning) {
         // ---- Start of Spring ----
-        printf("--------- Start of year %i ----------\r\n",year);
-        printf("It is spring of the year %i. \r\n",year);
+        printf("--------- Start of year %i ----------\r\n\r\n",year);
+        printf("--------- Spring %i --------- \r\n",year);
         printf("Starting timer now for %i minutes...\r\n",D_PHASE);
-        //Wait loop for timer -- poll gpio status meanwhile
-        waitloop(D_PHASE);
-        printf("Spring %i is over -- calling arbitor.\r\n",year);
+        waitloop(D_PHASE); //Start of Order & Diplomacy phase
 	    numO = getTestOrders(testseed,200,"/tmp/torders");
-        //arbitor();
-        printf("Decisions have been made.\r\n");
+        testseed++;
+        arbitor();
         //starting retreat phase
         if (Rneeded) {
             printf("Starting retreat phase for spring %i.\r\n",year);
+            printf("Starting timer now for %i minutes...\r\n",R_PHASE);
             waitloop(R_PHASE);
+	        numO = getTestOrders(testseed,200,"/tmp/torders");
+            testseed++;
+            arbitor();
             //gen orders and call arbitrator
         } else {
             printf("Skipping retreat phase for spring %i.\r\n",year);
         }
         // ---- Start of Fall ----
-        printf("It is fall of the year %i.\r\n",year);
+        printf("\r\n\r\n--------- Fall %i --------- \r\n",year);
+        printf("Starting timer now for %i minutes...\r\n",D_PHASE);
         waitloop(D_PHASE);
-        printf("Orders phase for fall %i is over -- calling arbitor.\r\n",year);
+	    numO = getTestOrders(testseed,200,"/tmp/torders");
+        testseed++;
+        arbitor();
         //starting retreat phase
         if (Rneeded) {
             printf("Starting retreat phase for fall %i.\r\n",year);
+            printf("Starting timer now for %i minutes...\r\n",R_PHASE);
             waitloop(R_PHASE);
+	        numO = getTestOrders(testseed,200,"/tmp/torders");
+            testseed++;
+            arbitor();
             //gen orders and call arbitrator
         } else {
             printf("Skipping retreat phase for fall %i.\r\n",year);
         }
         if (Sneeded) {
             printf("Starting supply phase for fall %i.\r\n",year);
+            printf("Starting timer now for %i minutes...\r\n",S_PHASE);
             waitloop(S_PHASE);
+	        numO = getTestOrders(testseed,200,"/tmp/torders");
+            testseed++;
+            arbitor();
         } else {
             printf("skipping supply phase for fall %i.\r\n",year);
         }
 
-        printf("Fall %i is over -- calling arbitor.\r\n",year);
-        printf("Checking winning conditions -- calling arbitor.\r\n",year);
+        printf("\r\nChecking winning conditions... ");
         if (gamewon()) {
-            printf("The Game is over!!!!\r\n",year);
+            printf("The Game is over!!!!\r\n");
+        } else {
+            printf("Nope.\r\n");
         }
+        printf("\r\n\r\n");
         year++;
-
-
-   // gameRunning = 0; //TODO remove
-        
+        gameRunning = 0; //TODO remove
     }
 
 
