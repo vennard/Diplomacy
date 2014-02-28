@@ -4,26 +4,45 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 #include "order.h"
 #include "region.h"
 #include "include.h"
 
-#define D_PHASE 3 //will be minutes later, seconds for now
-#define R_PHASE 5
-#define S_PHASE 5
+#define D_PHASE 1 //will be minutes later, seconds for now
+#define R_PHASE 1
+#define S_PHASE 1
 
 time_t timestart,gstart,gend;
 time_t stimer,etimer;
 int gameNum = 0;
 int year = 1802;
 int gameRunning = 0;
-int testseed = 0;
+int testseed = 18;
 int Rneeded = 0; //variables to eliminate unecessary phases
 int Sneeded = 0;
 
+//Reads input from zedboard GPIO TODO just rework entire menu
+//Saves game based on binary coding from gpio
 int menu() {
-    //Reads input from zedboard GPIO
-    //Saves game based on binary coding from gpio
+    //must save time of game now TODO
+    printf("Menu: c - continue,  0 - start new game, 1 - Exit, more to come later...\r\n");
+    int i = -1;
+    char input[16];
+    while (i == -1) {
+        printf("Enter a menu selection:");
+        scanf("%s", input);
+        if (strcmp(input,"c") == 0) {
+            i = 0;    
+        } else if (strcmp(input,"0") == 0) {
+            printf("selected new game!\r\n");
+            i = 0;    
+        } else if (strcmp(input,"1") == 0) {
+            printf("selected Exit!\r\n");
+        } else {    
+            printf("you typed %s which is clearly just wrong. Wrong!\r\n",input);
+        }
+    }
     gameNum = 0; //default game 0
     return 0; //0 = start new game
 }
@@ -39,15 +58,17 @@ int gamewon() {
 }
 
 int waitloop(int waittime) {
+    printf("Starting timer now for %i seconds...\r\n",waittime);
     int t = 0;
     time(&stimer);
     while(t < waittime) {
-         if (paused) menu();
+         if (paused() != 0) menu();
          //sleep(1);
          time(&etimer);
          t = (int) difftime(etimer, stimer);
          //printf("timer at %i seconds.\r\n",t);
     }
+    printf("timer complete after %i seconds.\r\n",t);
 }
 
 //polling during waits for pause GPIO input
@@ -72,18 +93,16 @@ int main(int argc, char *argv[]) {
         // ---- Start of Spring ----
         printf("--------- Start of year %i ----------\r\n\r\n",year);
         printf("--------- Spring %i --------- \r\n",year);
-        printf("Starting timer now for %i minutes...\r\n",D_PHASE);
         waitloop(D_PHASE); //Start of Order & Diplomacy phase
-	    numO = getTestOrders(testseed,200,"/tmp/torders");
-        testseed++;
+	    numO = getTestOrders(testseed,500,"/tmp/torders");
+        testseed+=5;
         arbitor();
         //starting retreat phase
         if (Rneeded) {
             printf("Starting retreat phase for spring %i.\r\n",year);
-            printf("Starting timer now for %i minutes...\r\n",R_PHASE);
             waitloop(R_PHASE);
-	        numO = getTestOrders(testseed,200,"/tmp/torders");
-            testseed++;
+	        numO = getTestOrders(testseed,500,"/tmp/torders");
+            testseed+=5;
             arbitor();
             //gen orders and call arbitrator
         } else {
@@ -91,17 +110,15 @@ int main(int argc, char *argv[]) {
         }
         // ---- Start of Fall ----
         printf("\r\n\r\n--------- Fall %i --------- \r\n",year);
-        printf("Starting timer now for %i minutes...\r\n",D_PHASE);
         waitloop(D_PHASE);
-	    numO = getTestOrders(testseed,200,"/tmp/torders");
-        testseed++;
+	    numO = getTestOrders(testseed,500,"/tmp/torders");
+        testseed+=5;
         arbitor();
         //starting retreat phase
         if (Rneeded) {
             printf("Starting retreat phase for fall %i.\r\n",year);
-            printf("Starting timer now for %i minutes...\r\n",R_PHASE);
             waitloop(R_PHASE);
-	        numO = getTestOrders(testseed,200,"/tmp/torders");
+	        numO = getTestOrders(testseed,500,"/tmp/torders");
             testseed++;
             arbitor();
             //gen orders and call arbitrator
@@ -110,9 +127,8 @@ int main(int argc, char *argv[]) {
         }
         if (Sneeded) {
             printf("Starting supply phase for fall %i.\r\n",year);
-            printf("Starting timer now for %i minutes...\r\n",S_PHASE);
             waitloop(S_PHASE);
-	        numO = getTestOrders(testseed,200,"/tmp/torders");
+	        numO = getTestOrders(testseed,500,"/tmp/torders");
             testseed++;
             arbitor();
         } else {
@@ -127,7 +143,8 @@ int main(int argc, char *argv[]) {
         }
         printf("\r\n\r\n");
         year++;
-        gameRunning = 0; //TODO remove
+        menu();
+        //gameRunning = 0; //TODO remove
     }
 
 
