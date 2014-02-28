@@ -21,8 +21,7 @@
 
 char fgdata[] = {"/tmp/gamedata"};
 char forders[] = {"/tmp/outfile"};
-int main(int argc, char *argv[]) {
-   if (argc > 3) perror("too many args");
+int arbitor() {
 	printf("Starting the Arbitrator...\r\n");
 	startnewgame(0);
 	numO = getTestOrders(8,8000,forders);

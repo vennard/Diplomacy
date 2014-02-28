@@ -28,8 +28,8 @@ int loadgamedata(char f[]) {
 }
 
 int startnewgame(int num) {
-	printf("Starting new game...");
   	//just handling one save game -- case statement for more
+	printf("Starting new game...");
 	char fname[] = "/tmp/savegame";
 	if (num == 0) {
 	  //fname = "/tmp/savegame1";
