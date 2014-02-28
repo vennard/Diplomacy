@@ -83,26 +83,77 @@ int firstvalidate(void) {
 		int t = o[i].type;
 		int tc = o[i].tcountry;
 		int sc = o[i].scountry;
+        int or = o[i].order;
+
 	  	if (g[c].player != p) continue; //Player doesn't match 
         if (g[c].occupy_type == -1) continue; //Region doesn't have unit
-
-        int or = o[i].order;
         switch (or) {
             case 0 : //hold
+	  		    printf("Order #%i which is a hold is valid!\r\n",i);
+                validOrders++;
+                o[i].valid = 1;
+                g[c].dS++;
+                continue;
                 break;
             case 1 : //move
+                if ((g[c].occupy_type == 0)&&(g[tc].type == 2)) continue;
+                if ((g[c].occupy_type == 1)&&(g[tc].type == 0)) continue;
+                if (!isneighbor(tc,g[c].ncountrys)) continue;
+	  		        printf("Order #%i which is a troop issued move is valid!\r\n",i);
+                    validOrders++;
+                    o[i].valid = 1;
+                    g[tc].aS++; //++attack strength to target country
                 break;
             case 2 : //support
+                //land units cant support water region
+                if ((g[c].occupy_type == 0)&&(g[sc].type == 2)) continue; 
+                //fleet cant support inland region
+                if ((g[c].occupy_type == 1)&&(g[sc].type == 0)) continue;
+                if (g[sc].occupy_type == -1) continue; 
+                if (!isneighbor(sc,g[c].ncountrys)) continue; 
+                if (tc == -1) { //supporting a hold,convoy, or support
+	  		        printf("Order #%i which is a support of a hold, support, or convoy is valid!\r\n",i);
+                    o[i].valid = 1;
+                    g[sc].dS++; //++defense strength of support country
+                    validOrders++;
+                    continue;
+                } else { //supporting a move
+                    //sc and tc must be neighbors of eachother and c
+                    if (!isneighbor(tc,g[sc].ncountrys)) continue;
+                    if (!isneighbor(tc,g[c].ncountrys)) continue;
+	  		        printf("Order #%i which is a support of a move is valid!\r\n",i);
+                    o[i].valid = 1;
+                    g[tc].aS++; //++attack strength to target country
+                    validOrders++;
+                    continue;
+                }
                 break;
             case 3 : //convoy
                 if (g[c].occupy_type == 0) { //land units convoy order
-                    if (g[c].type != 1) continue;
+                    if (g[c].type != 1) continue; //region must be coastal
+                    //land unit must be neighbor of fleet & a fleet must exist
+                    if ((!isneighbor(c, g[sc].ncountrys))||(g[sc].occupy_type != 1)) continue; 
+                    //TODO complicated target country check
+                    //Must recursively check through countrys neighboring sc
+                    //checking for fleets then check through those neighbors etc
+                    //until the tc is found or we run out of fleets to search
+                    //if all those pass then this convoy order is valid
+	  		        printf("Order #%i which is a troop issued convoy is valid!\r\n",i);
+                    o[i].valid = 1;
+                    validOrders++;
+                    continue;
                 } else if (g[c].occupy_type == 1) { //fleets convoy order
-                    if (g[c].type != 2) continue;
+                    if (g[c].type != 2) continue; //region must be water
+                    if (g[sc].type != 1) continue; //troop must be coastal
+                    if (g[sc].occupy_type != 0) continue; //troop must exist
+                    //use same recursive search as above TODO
+	  		        printf("Order #%i which is a fleet issued convoy is valid!\r\n",i);
+                    o[i].valid = 1;
+                    validOrders++;
+                    continue;
                 } else {
                     continue;
                 }
-
                 break;
             default :
                 break;
@@ -110,89 +161,7 @@ int firstvalidate(void) {
 
     }
 
-        /*
-	  		//printf("Order #%i: Player does not have unit at orders country! \r\n",i);
-			continue;
-		} 
-		//Check that region type is correct
-		if (t != g[c].occupy_type) {
-	  		//printf("Order #%i: Troop type does not match! \r\n",i);
-			continue;
-		}
-		//Order is a hold
-		if (o[i].order == 0) {
-			o[i].valid = 1;
-	  		printf("Order #%i which is a hold is valid! \r\n",i);
-			validOrders++;
-			continue;
-		}
-		//check that target country is a neighbor of troop country
-        if (!isneighbor(tc, g[c].ncountrys)) continue;
-       
-		//Order is a convoy
-		if (o[i].order == 3) {
-			//check that scountry has a unit
-			if (g[sc].occupy_type == -1) continue;	
-			//check that scountry has correct unit type
-			if (g[sc].type == 2) continue;  
-			//check that tcountry is correct type 
-			if (g[tc].type == 2) continue;
-			//check that scountry (location of land unit to be moved) is valid
-			int validconvoy = 0;
-			int a = 0;
-			while (nc[a] != -1) {
-				if (nc[a] == sc) validconvoy = 1;	
-			  	a++;
-			}
-			if (!validconvoy) continue; 
-			printf("Order #%i which is a convoy is valid!\r\n",i);
-			validOrders++;
-			o[i].valid = 1;
-			continue;
-		}
-		//check that target country is correct type
-		int validtype = 0;
-		if (t == 0) {   	//if land unit
-		  	if ((g[tc].type == 0)||(g[tc].type == 1)) {
-				validtype = 1;	 	
-		  	}
-		} else if (t == 1) { //if fleet unit
-		  	if ((g[tc].type == 1)||(g[tc].type == 2)) {
-				validtype = 1;	 	
-		  	}
-		} else {
-			perror("incorrect order type");
-	   }
-		if (validtype != 1) continue;
-		
-		//Order is a move
-		if (o[i].order == 1) {
-	  		printf("Order #%i which move is valid! \r\n",i);
-			validOrders++;
-			o[i].valid = 1;
-			continue;
-		}
-		//Order is a support
-		if (o[i].order == 2) {
-		  //check that target country is neighbor of support country
-		  int f = 0;
-		  int validsupport = 0;
-		  nc = g[tc].ncountrys;
-		  while (nc[f] != -1) {
-			 if (nc[f] == sc) {
-				validsupport = 1;
-			 }
-			 f++;
-		  }
-		  if (validsupport == 1) {
-				printf("Order #%i which is a support is valid!\r\n",i);
-				o[i].valid = 1;
-				validOrders++;
-				continue;
-		  }
-		}
 
-	}
 	printf("Number of valid orders after 1st validation = %i\r\n",validOrders);
 	int j;
 	for(j = 0;j < numO;j++) {
@@ -202,6 +171,4 @@ int firstvalidate(void) {
 	  }
 	}
 	return validOrders;
-    */
-    return 0;
 }

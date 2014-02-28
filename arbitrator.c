@@ -18,12 +18,12 @@
 // Player Num = 1 -> 4
 // Orders: 0 - Hold, 1 - Move, 2 - Support, 3 - Convoy // BY DEFAULT 000 = NULL (represents no country)
 
-
-char fgdata[] = {"/tmp/gamedata"};
-char forders[] = {"/tmp/outfile"};
+int numValidOrders = 0;
 int arbitor() {
 	printf("Starting the Arbitrator...\r\n");
-	//if (firstvalidate() == -1) perror("first validate failed");
+    numValidOrders = firstvalidate();
+	if (numValidOrders == -1) perror("first validate failed");
 
+   validOrders = 0;
    return 0;
 }
