@@ -375,7 +375,7 @@ r[i].ncountrys[1] = 23; //sil
 for (j=2;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 30: //sil
-r[i].type = 1;
+r[i].type = 0;
 r[i].occupy_type = -1;
 r[i].supply = 0;
 r[i].player = -1;

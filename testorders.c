@@ -116,19 +116,21 @@ int iorder(int s) {
                     temp = nc[a];
                     if (g[temp].type==2) {
                         r.scountry = temp; 
+                        temp = -1;
                     }
                     a++;
                  }
-                 r.scountry = 0;
+                 r.scountry = rand() % 48;
               } else { //fleet
                     while(temp != -1) {
                        temp = nc[a];
                        if (g[temp].type==1) {
                            r.scountry = temp; 
+                           temp = -1;
                        }
                        a++;
                     }
-                    r.scountry = 0;
+                r.scountry = rand() % 48;
                 }
                 //choose correct target type and region
                 a = 0;
@@ -138,9 +140,11 @@ int iorder(int s) {
                     temp = nc[a];
                     if (g[temp].type == 1) {
                         r.tcountry = temp;
+                        temp = -1;
                     }
                     a++;
                 }
+                r.tcountry = rand() % 48;
                 break;
         default :
              break;

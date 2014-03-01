@@ -73,6 +73,7 @@ int isneighbor(int c, int *nc) {
 }
 
 //First Run through validation check
+//TODO must add siljan as ONLY coastal to Van!
 int firstvalidate(void) {
 	//Check if order is valid
 	int i;
@@ -104,10 +105,9 @@ int firstvalidate(void) {
                     g[tc].aS++; //++attack strength to target country
                 break;
             case 2 : //support
-                //land units cant support water region
-                if ((g[c].occupy_type == 0)&&(g[sc].type == 2)) continue; 
-                //fleet cant support inland region
-                if ((g[c].occupy_type == 1)&&(g[sc].type == 0)) continue;
+                //check correct target country types
+                if ((t == 0)&&(g[tc].type == 2)) continue;  
+                if ((t == 1)&&(g[tc].type == 0)) continue;
                 if (g[sc].occupy_type == -1) continue; 
                 if (!isneighbor(sc,g[c].ncountrys)) continue; 
                 if (tc == -1) { //supporting a hold,convoy, or support
@@ -116,7 +116,7 @@ int firstvalidate(void) {
                     g[sc].dS++; //++defense strength of support country
                     validOrders++;
                     continue;
-                } else { //supporting a move
+                 } else { //supporting a move
                     //sc and tc must be neighbors of eachother and c
                     if (!isneighbor(tc,g[sc].ncountrys)) continue;
                     if (!isneighbor(tc,g[c].ncountrys)) continue;
