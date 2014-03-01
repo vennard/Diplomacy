@@ -12,6 +12,7 @@
 #define D_PHASE 1 //will be minutes later, seconds for now
 #define R_PHASE 1
 #define S_PHASE 1
+#define T_ORDERS 10
 
 time_t timestart,gstart,gend;
 time_t stimer,etimer;
@@ -94,14 +95,14 @@ int main(int argc, char *argv[]) {
         printf("--------- Start of year %i ----------\r\n\r\n",year);
         printf("--------- Spring %i --------- \r\n",year);
         waitloop(D_PHASE); //Start of Order & Diplomacy phase
-	    numO = getTestOrders(testseed,500,"/tmp/torders");
+	    numO = getTestOrders(testseed,T_ORDERS,"/tmp/torders");
         testseed+=5;
         arbitor();
         //starting retreat phase
         if (Rneeded) {
             printf("Starting retreat phase for spring %i.\r\n",year);
             waitloop(R_PHASE);
-	        numO = getTestOrders(testseed,500,"/tmp/torders");
+	        numO = getTestOrders(testseed,T_ORDERS,"/tmp/torders");
             testseed+=5;
             arbitor();
             //gen orders and call arbitrator
@@ -111,14 +112,14 @@ int main(int argc, char *argv[]) {
         // ---- Start of Fall ----
         printf("\r\n\r\n--------- Fall %i --------- \r\n",year);
         waitloop(D_PHASE);
-	    numO = getTestOrders(testseed,500,"/tmp/torders");
+	    numO = getTestOrders(testseed,T_ORDERS,"/tmp/torders");
         testseed+=5;
         arbitor();
         //starting retreat phase
         if (Rneeded) {
             printf("Starting retreat phase for fall %i.\r\n",year);
             waitloop(R_PHASE);
-	        numO = getTestOrders(testseed,500,"/tmp/torders");
+	        numO = getTestOrders(testseed,T_ORDERS,"/tmp/torders");
             testseed++;
             arbitor();
             //gen orders and call arbitrator
@@ -128,7 +129,7 @@ int main(int argc, char *argv[]) {
         if (Sneeded) {
             printf("Starting supply phase for fall %i.\r\n",year);
             waitloop(S_PHASE);
-	        numO = getTestOrders(testseed,500,"/tmp/torders");
+	        numO = getTestOrders(testseed,T_ORDERS,"/tmp/torders");
             testseed++;
             arbitor();
         } else {
