@@ -26,10 +26,13 @@ int arbitor() {
     numValidOrders = firstvalidate();
 	if (numValidOrders == -1) perror("first validate failed");
     //throw out duplicate / outdated orders (ie player gives two orders to the same unit)
+    removeduplicates();
     //second validation handles contention
     numValidOrders = secondvalidate();
     //then move game board according to confirmed orders and output
 
+    //clean game board stats used by arbitor
+    clean();
    validOrders = 0;
    return 0;
 }

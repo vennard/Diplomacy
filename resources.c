@@ -308,7 +308,7 @@ int secondvalidate() {
                 }
 
                 break;
-            case 3 : //convoy
+            case 3 : //convoy TODO
                 printf("Analysing a convoy order... defense=%i vs attack=%i... ",d,a);
                 printf(" coming soon.\r\n");
                 break;
@@ -316,6 +316,7 @@ int secondvalidate() {
                 break;
         }
     }
+    //TODO add conflict resolution code (ie two units moving to same country, supports being cut, etc)
     //modify game board with confirmed orders
     for(k = 0;k < numO;k++) {
         if(o[k].confirmed == 1) {
@@ -338,6 +339,38 @@ int secondvalidate() {
                     break;
             }
         }
+    }
+    return 0;
+}
+
+//find and remove duplicate orders -- last valid order in wins
+int removeduplicates(){
+    int k;
+    int j;
+    for(k = 0;k < numO;k++) {
+        if (o[k].valid == 0) break;
+        for(j = 0;j < numO;j++) {
+            if (o[j].valid == 0) break;
+            if (j == k) break;
+            if ((o[k].player == o[j].player)&&(o[k].country == o[j].country)) {
+                //mark previous order as invalid
+                o[k].valid = 0;
+                printf("removed duplicate order! #%i - %i player %i vs. #%i - %i player %i\r\n",k,o[k].country,o[k].player,j,o[j].country,o[j].player);
+                validOrders--;
+            }
+        }
+        
+
+    }
+    return 0;
+}
+
+//clean up game board (remove round stats)
+int clean(){
+    int k;
+    for(k = 0;k < 48;k++) {
+        g[k].dS = 0;
+        g[k].aS = 0;
     }
     return 0;
 }
