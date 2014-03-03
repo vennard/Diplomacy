@@ -12,5 +12,6 @@ extern int loadgamedata(char f[]);
 extern int startnewgame(int num);
 extern int getTestOrders(int seed,int numOrders, char f[]);
 extern int firstvalidate(void);
+extern int secondvalidate(void);
 
 #endif

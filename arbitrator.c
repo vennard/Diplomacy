@@ -21,8 +21,14 @@
 int numValidOrders = 0;
 int arbitor() {
 	printf("Starting the Arbitrator...\r\n");
+    //first round is simple exclusion for incorrect orders
+    //also counts up variables used for second validate
     numValidOrders = firstvalidate();
 	if (numValidOrders == -1) perror("first validate failed");
+    //throw out duplicate / outdated orders (ie player gives two orders to the same unit)
+    //second validation handles contention
+    numValidOrders = secondvalidate();
+    //then move game board according to confirmed orders and output
 
    validOrders = 0;
    return 0;

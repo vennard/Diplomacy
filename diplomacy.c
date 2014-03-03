@@ -91,6 +91,8 @@ int main(int argc, char *argv[]) {
     }
 
     while (gameRunning) {
+        // debug print of game status
+        printgame(); 
         // ---- Start of Spring ----
         printf("--------- Start of year %i ----------\r\n\r\n",year);
         printf("--------- Spring %i --------- \r\n",year);

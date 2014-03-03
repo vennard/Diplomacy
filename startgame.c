@@ -389,7 +389,7 @@ for (j=6;j<12;j++) r[i].ncountrys[j] = -1;
 break;
 case 31: //sto
 r[i].type = 1;
-r[i].occupy_type = 1;
+r[i].occupy_type = 0;
 r[i].supply = 1;
 r[i].player = 2;
 r[i].ncountrys[0] = 25; //bol

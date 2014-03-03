@@ -58,7 +58,7 @@ int iorder(int s) {
         r.type = rand() % 2;
         found = findunits(r.player, r.type);
     }
-    printf("found %i valid units for player %i of type %i \r\n",found, r.player,r.type);
+    //printf("found %i valid units for player %i of type %i \r\n",found, r.player,r.type);
     int x = rnd % found;
     int country = nptr[x];
     r.country = country;

@@ -19,6 +19,15 @@ int genStart(char outfile[]);
 #endif
 /*
  * See Google Drive for country to integer mapping
+ *
+ * --------------REGION EXCEPTIONS------------------
+ *  1. fleet on coast of 17 cannot move to 9
+ *  2. 25 has two coasts
+ *  3. 30 can only have a fleet move to occupy from 29
+ *  4. 36 cannot move to 35 if 18 is occupied by opposing force?? TODO confirm 
+ *  5. 34 cannot move from 35 to 33 or 33 to 35 ?
+ *  6. 26 cannot move from 16 to 10 or 10 to 16 ?
+ *
  */
 
 		  
