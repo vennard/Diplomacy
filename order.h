@@ -3,17 +3,19 @@
 
 typedef struct __order_t {
   		  int valid; // TO BE SET BY ARBITRATOR
-          int confirmed;
-		  int player;
-		  int order; // Orders: 0 - Hold, 1 - Move, 2 - Support, 3 - Convoy
+          int confirmed; // TO BE SET BY ARBITRATOR
+		  int player; //0 - Poland, 1 - Russia, 2 - Sweden, 3 - Finland
+		  int order; // 0 - Hold, 1 - Move, 2 - Support, 3 - Convoy
 		  int type; //0 - army 1 - fleet
-		  int country; //players country -- see below for table
-		  int tcountry; // destination country for move, support, and convoy
-          //(this is support players destination)
-
-		  int scountry; //for support orders - home of support players unit
-		  //for convoy this is land units location
-		  						 //-1 if not a support order
+		  int country; //players country -- see google drive for mapping
+          // for move: destination country
+          // for support move: destination country of supported move
+          // for convoy: destination of troop
+		  int tcountry; 
+          // for support hold: supported units country
+          // for support move: supported units origin country
+          // for troop issued convoy: first fleet in convoy country
+		  int scountry; 
 } order_t;
 
 int genOrders(int seed,int numOrders, char outfile[]);
