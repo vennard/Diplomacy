@@ -249,7 +249,7 @@ int secondvalidate() {
     int vo[255]; //valid orders
     int count = 0;
     //find all valid orders
-    int k;
+    int k,j;
     for(k = 0;k < numO;k++) {
         if(o[k].valid == 1) {
             vo[count] = k;
@@ -277,6 +277,7 @@ int secondvalidate() {
                 } else if (d == a) {
                     printf("standoff! \r\n");
                 } else {
+                    //TODO add mark on order for needed resolution on retreat phase
                     printf("failed! \r\n");
                 }
                 break;
@@ -317,6 +318,38 @@ int secondvalidate() {
         }
     }
     //TODO add conflict resolution code (ie two units moving to same country, supports being cut, etc)
+    int a1, a2;
+    for(k = 0;k < numO;k++) {
+        if (o[k].valid == 0) continue;
+        if (o[k].order == 1) { //find conflicting moves
+            int tc = o[k].tcountry;
+            for(j = 0;j < numO;j++) {
+                if (j == k) break;
+                if (o[j].valid == 0) continue;
+                if ((o[j].order == 1)&&(o[j].tcountry == tc)) {
+                    //found conflict -- now check strengths
+                    printf("Found a move conflict at order #%i and #%i!! removing...\r\n",k,j);
+                    a1 = g[o[k].country].aS;
+                    a2 = g[o[j].country].aS;
+                    if (a1 == a2) { //evenly matched move -- both fail
+                        //mark one as invalid and one as confirmed = -1
+                        //this allows for further conflicts to be found
+                        o[k].valid = 0;
+                        o[j].confirmed = -1;
+                    } else if (a1 > a2) { //move 1 wins
+                        o[j].valid = 0;
+                    } else if (a2 > a1) {
+                        o[k].valid = 0;
+                    }
+                }
+            }
+        }
+    }
+    //TODO remove all orders marked with confirm = -1
+    for(k = 0;k < numO;k++) {
+        if (o[k].confirmed == -1) o[k].valid == 0;
+    }
+
     //modify game board with confirmed orders
     for(k = 0;k < numO;k++) {
         if(o[k].confirmed == 1) {
