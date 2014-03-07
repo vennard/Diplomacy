@@ -88,6 +88,9 @@ int checkfororders(){
             printf("%i bytes read : %s\n", rx_length, rx_buffer);
         }
     }
+
+    //close uart 
+    close(uart0_fs);
      */
 
 }

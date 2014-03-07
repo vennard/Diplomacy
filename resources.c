@@ -151,7 +151,6 @@ int firstvalidate(void) {
 		int tc = o[i].tcountry;
 		int sc = o[i].scountry;
         int or = o[i].order;
-
 	  	if (g[c].player != p) continue; //Player doesn't match 
         if (g[c].occupy_type == -1) continue; //Region doesn't have unit
         switch (or) {
@@ -164,6 +163,45 @@ int firstvalidate(void) {
             case 1 : //move
                 if ((g[c].occupy_type == 0)&&(g[tc].type == 2)) continue;
                 if ((g[c].occupy_type == 1)&&(g[tc].type == 0)) continue;
+                //check move exceptions
+                switch (o[i].country) {
+                    case 42 :
+                        if ((o[i].type == 1)&&(o[i].tcountry == 30)) continue;
+                        break;
+                    case 46 :
+                        if ((o[i].type == 1)&&(o[i].tcountry == 38)) continue;
+                        break;
+                    case 40 :
+                        if ((o[i].type == 1)&&(o[i].tcountry == 38)) continue;
+                        break;
+                    case 39 :
+                        if ((o[i].type == 1)&&(o[i].tcountry == 36)) continue;
+                        if ((o[i].type == 1)&&(o[i].tcountry == 38)) continue;
+                        break;
+                    case 37 :
+                        if ((o[i].type == 1)&&(o[i].tcountry == 18)) continue;
+                        break;
+                    case 34 :
+                        if ((o[i].type == 1)&&(o[i].tcountry == 38)) continue;
+                        break;
+                    case 31 :
+                        if ((o[i].type == 1)&&(o[i].tcountry == 30)) continue;
+                        break;
+                    case 30 :
+                        if ((o[i].type == 1)&&(o[i].tcountry == 42)) continue;
+                        if ((o[i].type == 1)&&(o[i].tcountry == 31)) continue;
+                        if ((o[i].type == 1)&&(o[i].tcountry == 25)) continue;
+                        break;
+                    case 25 : //TODO add support for multiple coasts
+                        if ((o[i].type == 1)&&(o[i].tcountry == 30)) continue;
+                        break;
+                    case 17 :
+                        if ((o[i].type == 1)&&(o[i].tcountry == 9)) continue;
+                        break;
+                    case 9 :
+                        if ((o[i].type == 1)&&(o[i].tcountry == 17)) continue;
+                        break;
+                }
                 if (!isneighbor(tc,g[c].ncountrys)) continue;
 	  		        printf("#%i move | ",i);
                     validOrders++;
@@ -351,40 +389,43 @@ int secondvalidate() {
     }
 
     //modify game board with confirmed orders
+    printf("\r\n");
     for(k = 0;k < numO;k++) {
         if(o[k].confirmed == 1) {
             order_t co = o[k];
             switch (co.order) {
                 case 0 : 
-                    printf("hold order confirmed -- player #%i at country %i (type %i)\r\n",co.player,co.country,co.type);
+                    printf(" HOLD P%i U%i C%i |",co.player,co.type,co.country);
                     break;
                 case 1 :
-                    printf("move order confirmed -- player #%i at country %i (type %i) moving to country %i \r\n",co.player,co.country,co.type,co.tcountry);
+                    printf(" MOVE P%i U%i C%i -> TC%i |",co.player,co.type,co.country,co.tcountry);
                     moveunit(co.country, co.tcountry);
                     break;
                 case 2 :
-                    printf("support order confirmed -- player #%i at country %i (type %i)\r\n",co.player,co.country,co.type);
+                    printf(" SUPPORT P%i U%i C%i +> (SC%i -> TC%i) |",co.player,co.type,co.country,co.scountry,co.tcountry);
                     break;
                 case 3 :
-                    printf("convoy order confirmed -- player #%i at country %i (type %i)\r\n",co.player,co.country,co.type);
+                    printf(" CONVOY P%i U%i C%i +> (SC%i -> TC%i) |",co.player,co.type,co.country,co.scountry,co.tcountry);
                     break;
                 default :
                     break;
             }
         }
     }
+    printf("\r\n\r\n");
     return 0;
 }
 
 //find and remove duplicate orders -- last valid order in wins
 int removeduplicates(){
+    printf("Checking for duplicate orders...\r\n");
     int k;
     int j;
     for(k = 0;k < numO;k++) {
-        if (o[k].valid == 0) break;
+        if (o[k].valid == 0) continue;
         for(j = 0;j < numO;j++) {
-            if (o[j].valid == 0) break;
-            if (j == k) break;
+            if (o[j].valid == 0) continue;
+            if (j == k) continue;
             if ((o[k].player == o[j].player)&&(o[k].country == o[j].country)) {
                 //mark previous order as invalid
                 o[k].valid = 0;
