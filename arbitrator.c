@@ -33,6 +33,6 @@ int arbitor() {
 
     //clean game board stats used by arbitor
     clean();
-   validOrders = 0;
+    validOrders = 0;
    return 0;
 }

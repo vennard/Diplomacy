@@ -16,6 +16,7 @@ int main(int argc, char *argv[]) {
     //Setup UART
     int uart0_fs = -1;
     // read write, prevents device becoming controller for process, non blocking
+    // TODO rename port
     uart0_fs = open("/dev/ttyS0", O_RDWR | O_NOCTTY | O_NDELAY);
     if (uart0_fs == -1) {
         perror("cant open serial port");
@@ -39,6 +40,8 @@ int main(int argc, char *argv[]) {
     *ptx++ = 'e';
     *ptx++ = 's';
     *ptx++ = 't';
+
+
 
     if (uart0_fs != -1) {
         int count = write(uart0_fs, &txbuff[0], (ptx - &txbuff[0]));
