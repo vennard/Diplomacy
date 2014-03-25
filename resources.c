@@ -319,7 +319,6 @@ int execute() {
 //Can be rerun if strengths are changed
 //type = order type to be analyzed
 int validate(int type) {
-    printf("Starting validation...");
     int vo[255]; //valid orders
     int count = 0;
     //find all valid orders
@@ -330,7 +329,6 @@ int validate(int type) {
             count++;
         }
     }
-    printf(" found %i valid orders!\r\n",count);
     // look for cutoff supports TODO
     // look for move standoffs TODO
     // look for convoy cutoffs TODO
@@ -346,33 +344,38 @@ int validate(int type) {
         switch(to.order) {
             case 0 : //hold
                 d = g[c].dS;
-                printf("Analysing a hold order...country=%i defense=%i... ",c,d);
+                printf("Reviewed hold order #%i with dS=%i... ",vo[k],d);
                 //find any moves that have higher attack
                 int check = 1;
                 for (j = 0;j < count;j++) {
+                    if (j == k) continue;
                     ro = o[vo[j]];     
                     if (ro.tcountry == c) {
                         if (g[ro.country].aS > d) { 
                             check = 0;
                             o[vo[k]].confirmed = -2; //mark order for resolution
                             Rneeded = 1;
-                            printf("failed! \r\n");
+                            printf("failed by order #%i with aS=%i. \r\n",vo[j],g[ro.country].aS);
                         }
                     }
                 }
-                if (check) o[vo[k]].confirmed = 1; //If no higher strength move then confirm
+                if (check) {
+                    o[vo[k]].confirmed = 1; //If no higher strength move then confirm
+                    printf("success! \r\n");
+                }
                 break;
             case 1 : //move -- check for standoff moves (2 units to the same space)
                 d = g[tc].dS;
                 a = g[c].aS;
-                printf("Analysing a move order with attack=%i... vs defense=%i ",a,d);
                 check = 1;
                 for (j = 0;j < count;j++) {
                     ro = o[vo[j]];     
+                    if (j == k) continue;
                     //invalidate if found move order with >= strength moving to same country
-                    if ((ro.order == 1)&&(ro.tcountry==tc)&&(g[ro.country].aS = a)) check = -1;
+                    if ((ro.order == 1)&&(ro.tcountry==tc)&&(g[ro.country].aS == a)) check = -1;
                     if ((ro.order == 1)&&(ro.tcountry==tc)&&(g[ro.country].aS > a)) check = 0;
                 }
+                printf("Analysed move order #%i aS=%i against dS=%i... ",vo[k],a,d);
                 if (check == 1) {
                     if (a > d) {
                         printf("success! \r\n");
@@ -396,6 +399,7 @@ int validate(int type) {
                 printf("Analysing a support order... defense=%i ",d);
                 check = 1;
                 for (j = 0;j < count;j++) {
+                    if (j == k) continue;
                     ro = o[vo[j]];     
                     a = g[ro.country].aS;
                     if ((ro.order == 1)&&(ro.tcountry == c)) check = 0;
@@ -438,60 +442,19 @@ int resolve() {
 
 }
 
-int secondvalidate() {
-    //conflict resolution TODO remove 
-    /*
-    int k, tc, a1, a2, j;
-    for(k = 0;k < numO;k++) {
-        if (o[k].valid == 0) continue;
-        if (o[k].order == 1) { //find conflicting moves
-            int tc = o[k].tcountry;
-            for(j = 0;j < numO;j++) {
-                if (j == k) continue;
-                if (o[j].valid == 0) continue;
-                if ((o[j].order == 1)&&(o[j].tcountry == tc)) {
-                    //found conflict -- now check strengths
-                    printf("Found a move conflict at order #%i and #%i!! removing...\r\n",k,j);
-                    a1 = g[o[k].country].aS;
-                    a2 = g[o[j].country].aS;
-                    if (a1 == a2) { //evenly matched move -- both fail
-                        //mark one as invalid and one as confirmed = -1
-                        //this allows for further conflicts to be found
-                        o[k].valid = 0;
-                        o[j].confirmed = -1;
-                    } else if (a1 > a2) { //move 1 wins
-                        o[j].valid = 0;
-                    } else if (a2 > a1) {
-                        o[k].valid = 0;
-                    }
-                }
-            }
-        }
-    }
-
-    //TODO remove all orders marked with confirm = -1
-    for(k = 0;k < numO;k++) {
-        if (o[k].confirmed == -1) o[k].valid == 0;
-    }
-    */
-    return 0;
-}
-
 //find and remove duplicate orders -- last valid order in wins
 int removeduplicates(){
-    printf("Checking for duplicate orders...\r\n");
+    printf("Checking for duplicate orders out of %i orders...\r\n", numO);
     int k;
     int j;
     for(k = 0;k < numO;k++) {
-        if (o[k].valid == 0) continue;
         for(j = 0;j < numO;j++) {
-            if (o[j].valid == 0) continue;
             if (j == k) continue;
+            if (o[j].valid == -1) continue;
             if ((o[k].player == o[j].player)&&(o[k].country == o[j].country)) {
                 //mark previous order as invalid
                 o[k].valid = -1;
-                printf("removed duplicate order! #%i - %i player %i vs. #%i - %i player %i\r\n",k,o[k].country,o[k].player,j,o[j].country,o[j].player);
-                validOrders--;
+                printf("removed duplicate #%i (left #%i) player %i at country %i \r\n",k,j,o[k].player,o[k].country);
             }
         }
     }
