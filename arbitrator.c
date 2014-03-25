@@ -11,28 +11,29 @@
 #include "region.h"
 #include "include.h"
 
-//Creating sample output from the controllers
-// Sending string (bytes)
-// Player Num (1) / Order (1) / Unit Location (3) / [To Country (3)]
-//
-// Player Num = 1 -> 4
-// Orders: 0 - Hold, 1 - Move, 2 - Support, 3 - Convoy // BY DEFAULT 000 = NULL (represents no country)
-
 int numValidOrders = 0;
+
 int arbitor() {
 	printf("Starting the Arbitrator...\r\n");
-    //first round is simple exclusion for incorrect orders
-    //also counts up variables used for second validate
+    removeduplicates();
     numValidOrders = firstvalidate();
 	if (numValidOrders == -1) perror("first validate failed");
-    //throw out duplicate / outdated orders (ie player gives two orders to the same unit)
-    removeduplicates();
-    //second validation handles contention
-    numValidOrders = secondvalidate();
-    //then move game board according to confirmed orders and output
 
-    //clean game board stats used by arbitor
+    validate(2);
+    validate(1);
+    validate(3);
+    validate(0);
+
+    execute();
     clean();
-    validOrders = 0;
-   return 0;
+    return 0;
 }
+
+/* Order Validation process
+ * 1. firstvalidate: makes first run check to determine if order location, unit, unit type, and targets are correct
+ * 2. removeduplicates: removes all outdated orders
+ * 3. validate: runs through confirming all orders - tries to invalidate each order (looks for two units moving to the same place or cutoffs)
+ * 4. resolve: looks at valid but unconfirmed orders - adjusts strengths and rerun validate 
+ * 5. execute: runs valid orders once they are all confirmed
+ * 6. clean: cleans all used variables (board strengths and round counts etc)
+ */

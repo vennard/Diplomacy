@@ -151,6 +151,7 @@ int firstvalidate(void) {
 		int tc = o[i].tcountry;
 		int sc = o[i].scountry;
         int or = o[i].order;
+        if (o[i].valid == -1) continue; //marked as invalid duplicate 
 	  	if (g[c].player != p) continue; //Player doesn't match 
         if (g[c].occupy_type == -1) continue; //Region doesn't have unit
         switch (or) {
@@ -206,7 +207,7 @@ int firstvalidate(void) {
 	  		        printf("#%i move | ",i);
                     validOrders++;
                     o[i].valid = 1;
-                    g[tc].aS++; //++attack strength to target country
+                    g[c].aS++; //++attack strength to country
                 break;
             case 2 : //support
                 //check correct target country types
@@ -218,6 +219,7 @@ int firstvalidate(void) {
 	  		        printf("#%i support hold | ",i);
                     o[i].valid = 1;
                     g[sc].dS++; //++defense strength of support country
+                    g[c].dS++; //supporting country has own strength if attacked
                     validOrders++;
                     continue;
                  } else { //supporting a move
@@ -226,7 +228,8 @@ int firstvalidate(void) {
                     if (!isneighbor(tc,g[c].ncountrys)) continue;
 	  		        printf("#%i support move | ",i);
                     o[i].valid = 1;
-                    g[tc].aS++; //++attack strength to target country
+                    g[sc].aS++; //++attack strength to support country
+                    g[c].dS++; //supporting country has own strength if attacked
                     validOrders++;
                     continue;
                 }
@@ -239,6 +242,7 @@ int firstvalidate(void) {
                     //check path for valid fleets to target country
                     if (checkconvoy(c,tc,g[c].ncountrys,-1) != 1) continue;
 	  		        printf("#%i troop convoy | ",i);
+                    g[c].aS++;
                     o[i].valid = 1;
                     validOrders++;
                     continue;
@@ -260,10 +264,7 @@ int firstvalidate(void) {
             default :
                 break;
         }
-
     }
-
-
 	printf("\r\n\r\nNumber of valid orders after 1st validation = %i\r\n",validOrders);
 	int j;
 	for(j = 0;j < numO;j++) {
@@ -282,8 +283,43 @@ int moveunit(int c, int tc) {
     g[c].occupy_type = -1;
     return 0;
 }
-int secondvalidate() {
-    printf("Starting second round validation...");
+
+//modify game board with confirmed orders
+int execute() {
+    int k;
+    printf("\r\n");
+    for(k = 0;k < numO;k++) {
+        if(o[k].confirmed == 1) {
+            order_t co = o[k];
+            switch (co.order) {
+                case 0 : 
+                    printf(" HOLD P%i U%i C%i |",co.player,co.type,co.country);
+                    break;
+                case 1 :
+                    printf(" MOVE P%i U%i C%i -> TC%i |",co.player,co.type,co.country,co.tcountry);
+                    moveunit(co.country, co.tcountry);
+                    break;
+                case 2 :
+                    printf(" SUPPORT P%i U%i C%i +> (SC%i -> TC%i) |",co.player,co.type,co.country,co.scountry,co.tcountry);
+                    break;
+                case 3 :
+                    printf(" CONVOY P%i U%i C%i +> (SC%i -> TC%i) |",co.player,co.type,co.country,co.scountry,co.tcountry);
+                    //TODO if troop moveunit(co.country, co.tcountry) 
+                    break;
+                default :
+                    break;
+            }
+        }
+    }
+    printf("\r\n\r\n");
+    return 0;
+}
+
+//Analyses orders for conflicts
+//Can be rerun if strengths are changed
+//type = order type to be analyzed
+int validate(int type) {
+    printf("Starting validation...");
     int vo[255]; //valid orders
     int count = 0;
     //find all valid orders
@@ -292,60 +328,99 @@ int secondvalidate() {
         if(o[k].valid == 1) {
             vo[count] = k;
             count++;
-
         }
     }
     printf(" found %i valid orders!\r\n",count);
-    //check over valid orders
-    order_t to;
+    // look for cutoff supports TODO
+    // look for move standoffs TODO
+    // look for convoy cutoffs TODO
+    order_t to,ro;
     for(k = 0;k < count;k++) {
         to = o[vo[k]];
+        if (to.order != type) continue; //skip entries of incorrect order type
         int a,d;
         int c = to.country;
         int tc = to.tcountry;
         int sc = to.scountry;
+        int check = 1;
         switch(to.order) {
             case 0 : //hold
                 d = g[c].dS;
-                a = g[c].aS;
-                printf("Analysing a hold order... defense=%i vs attack=%i... ",d,a);
-                if (d > a) {
-                    printf("success! \r\n");
-                    o[vo[k]].confirmed = 1;
-                } else if (d == a) {
-                    printf("standoff! \r\n");
-                } else {
-                    //TODO add mark on order for needed resolution on retreat phase
-                    printf("failed! \r\n");
+                printf("Analysing a hold order...country=%i defense=%i... ",c,d);
+                //find any moves that have higher attack
+                int check = 1;
+                for (j = 0;j < count;j++) {
+                    ro = o[vo[j]];     
+                    if (ro.tcountry == c) {
+                        if (g[ro.country].aS > d) { 
+                            check = 0;
+                            o[vo[k]].confirmed = -2; //mark order for resolution
+                            Rneeded = 1;
+                            printf("failed! \r\n");
+                        }
+                    }
                 }
+                if (check) o[vo[k]].confirmed = 1; //If no higher strength move then confirm
                 break;
-            case 1 : //move
+            case 1 : //move -- check for standoff moves (2 units to the same space)
                 d = g[tc].dS;
-                a = g[tc].aS;
-                printf("Analysing a move order... defense=%i vs attack=%i... ",d,a);
-                if (a > d) {
-                    printf("success! \r\n");
-                    o[vo[k]].confirmed = 1;
-                } else if (d == a) {
-                    printf("standoff! \r\n");
+                a = g[c].aS;
+                printf("Analysing a move order with attack=%i... vs defense=%i ",a,d);
+                check = 1;
+                for (j = 0;j < count;j++) {
+                    ro = o[vo[j]];     
+                    //invalidate if found move order with >= strength moving to same country
+                    if ((ro.order == 1)&&(ro.tcountry==tc)&&(g[ro.country].aS = a)) check = -1;
+                    if ((ro.order == 1)&&(ro.tcountry==tc)&&(g[ro.country].aS > a)) check = 0;
+                }
+                if (check == 1) {
+                    if (a > d) {
+                        printf("success! \r\n");
+                        o[vo[k]].confirmed = 1;
+                    }
+                } else if (check == 0){
+                    printf("found another move with greater strength!\r\n");
+                    o[vo[k]].valid = 0;
+                    o[vo[k]].confirmed = -2; //mark for retreat resolution
+                    Rneeded = 1;
                 } else {
-                    printf("failed! \r\n");
+                    printf("standoff with another unit! \r\n");
+                    o[vo[k]].valid = 0;
+                    o[vo[k]].confirmed = 1; 
                 }
                 break;
-            case 2 : //support
+            case 2 : //support 
+                //RULE: support is cutoff if country supporting is attacked from any country but the country its supporting
+                //the country its supporting can only cut support by dislodging unit (ie aS > dS)
                 d = g[c].dS;
-                a = g[c].aS;
-                printf("Analysing a support order... defense=%i vs attack=%i... ",d,a);
-                if (d > a) {
+                printf("Analysing a support order... defense=%i ",d);
+                check = 1;
+                for (j = 0;j < count;j++) {
+                    ro = o[vo[j]];     
+                    a = g[ro.country].aS;
+                    if ((ro.order == 1)&&(ro.tcountry == c)) check = 0;
+                    if ((ro.order == 1)&&(ro.country == sc)&&(ro.tcountry == c)&&(a > d)) check = -1;
+                }
+                if (check == 1) {
                     printf("success! \r\n");
                     o[vo[k]].confirmed = 1;
-                } else if (d == a) { //still provides support TODO check
-                    printf("standoff! \r\n");
-                } else { 
-                    printf("failed! \r\n");
-                    //TODO add remove this support defense bonus to sc
+                } else if (check == 0) {
+                    printf("support cutoff by move! invalidating... \r\n");
+                    o[vo[k]].valid = 0;
+                    o[vo[k]].confirmed = 1;
+                    //remove support strengths
+                    if (ro.tcountry != -1) g[ro.scountry].aS--;
+                    if (ro.tcountry == -1) g[ro.scountry].dS--;
+                } else {
+                    printf("support dislodged by supported country move with greater strength! \r\n");
+                    o[vo[k]].valid = 0;
+                    //remove support strengths
+                    if (ro.tcountry != -1) g[ro.scountry].aS--;
+                    if (ro.tcountry == -1) g[ro.scountry].dS--;
+                    //Mark for retreat resolution
+                    o[vo[k]].confirmed = -2; //mark order for resolution
+                    Rneeded = 1;
                 }
-
                 break;
             case 3 : //convoy TODO
                 printf("Analysing a convoy order... defense=%i vs attack=%i... ",d,a);
@@ -355,14 +430,24 @@ int secondvalidate() {
                 break;
         }
     }
-    //TODO add conflict resolution code (ie two units moving to same country, supports being cut, etc)
-    int a1, a2;
+    return 0;
+}
+
+//looks at valid but unconfirmed orders
+int resolve() {
+
+}
+
+int secondvalidate() {
+    //conflict resolution TODO remove 
+    /*
+    int k, tc, a1, a2, j;
     for(k = 0;k < numO;k++) {
         if (o[k].valid == 0) continue;
         if (o[k].order == 1) { //find conflicting moves
             int tc = o[k].tcountry;
             for(j = 0;j < numO;j++) {
-                if (j == k) break;
+                if (j == k) continue;
                 if (o[j].valid == 0) continue;
                 if ((o[j].order == 1)&&(o[j].tcountry == tc)) {
                     //found conflict -- now check strengths
@@ -383,36 +468,12 @@ int secondvalidate() {
             }
         }
     }
+
     //TODO remove all orders marked with confirm = -1
     for(k = 0;k < numO;k++) {
         if (o[k].confirmed == -1) o[k].valid == 0;
     }
-
-    //modify game board with confirmed orders
-    printf("\r\n");
-    for(k = 0;k < numO;k++) {
-        if(o[k].confirmed == 1) {
-            order_t co = o[k];
-            switch (co.order) {
-                case 0 : 
-                    printf(" HOLD P%i U%i C%i |",co.player,co.type,co.country);
-                    break;
-                case 1 :
-                    printf(" MOVE P%i U%i C%i -> TC%i |",co.player,co.type,co.country,co.tcountry);
-                    moveunit(co.country, co.tcountry);
-                    break;
-                case 2 :
-                    printf(" SUPPORT P%i U%i C%i +> (SC%i -> TC%i) |",co.player,co.type,co.country,co.scountry,co.tcountry);
-                    break;
-                case 3 :
-                    printf(" CONVOY P%i U%i C%i +> (SC%i -> TC%i) |",co.player,co.type,co.country,co.scountry,co.tcountry);
-                    break;
-                default :
-                    break;
-            }
-        }
-    }
-    printf("\r\n\r\n");
+    */
     return 0;
 }
 
@@ -428,19 +489,18 @@ int removeduplicates(){
             if (j == k) continue;
             if ((o[k].player == o[j].player)&&(o[k].country == o[j].country)) {
                 //mark previous order as invalid
-                o[k].valid = 0;
+                o[k].valid = -1;
                 printf("removed duplicate order! #%i - %i player %i vs. #%i - %i player %i\r\n",k,o[k].country,o[k].player,j,o[j].country,o[j].player);
                 validOrders--;
             }
         }
-        
-
     }
     return 0;
 }
 
 //clean up game board (remove round stats)
 int clean(){
+    validOrders = 0;
     int k;
     for(k = 0;k < 48;k++) {
         g[k].dS = 0;

@@ -6,7 +6,7 @@
 extern region_t g[48];
 extern order_t o[MAX_ORDERS];
 extern int validOrders;
-extern int numO;
+extern int numO,Sneeded,Rneeded;
 
 extern int loadgamedata(char f[]);
 extern int startnewgame(int num);

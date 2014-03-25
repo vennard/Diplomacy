@@ -102,6 +102,7 @@ int main(int argc, char *argv[]) {
         arbitor();
         //starting retreat phase
         if (Rneeded) {
+            Rneeded = 0;
             printf("Starting retreat phase for spring %i.\r\n",year);
             waitloop(R_PHASE);
 	        numO = getTestOrders(testseed,T_ORDERS,"/tmp/torders");
@@ -119,6 +120,7 @@ int main(int argc, char *argv[]) {
         arbitor();
         //starting retreat phase
         if (Rneeded) {
+            Rneeded = 0;
             printf("Starting retreat phase for fall %i.\r\n",year);
             waitloop(R_PHASE);
 	        numO = getTestOrders(testseed,T_ORDERS,"/tmp/torders");
@@ -128,7 +130,9 @@ int main(int argc, char *argv[]) {
         } else {
             printf("Skipping retreat phase for fall %i.\r\n",year);
         }
+        //TODO add check to unset Sneeded - ie check for is supplys have changed 
         if (Sneeded) {
+            Sneeded = 0;
             printf("Starting supply phase for fall %i.\r\n",year);
             waitloop(S_PHASE);
 	        numO = getTestOrders(testseed,T_ORDERS,"/tmp/torders");
