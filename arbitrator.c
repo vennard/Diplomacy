@@ -18,6 +18,7 @@ int arbitor() {
     removeduplicates();
     numValidOrders = firstvalidate();
 	if (numValidOrders == -1) perror("first validate failed");
+    //TODO assign all units who have not been assigned a move a hold order
 
     validate(2);
     validate(1);

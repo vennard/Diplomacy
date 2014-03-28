@@ -11,6 +11,7 @@
 #include "region.h"
 #include "include.h"
 
+
 region_t g[48];
 order_t o[MAX_ORDERS];
 int validOrders = 0;
@@ -321,22 +322,19 @@ int execute() {
 int validate(int type) {
     int vo[255]; //valid orders
     int count = 0;
-    //find all valid orders
     int k,j;
+    //find all valid orders
     for(k = 0;k < numO;k++) {
         if(o[k].valid == 1) {
             vo[count] = k;
             count++;
         }
     }
-    // look for cutoff supports TODO
-    // look for move standoffs TODO
-    // look for convoy cutoffs TODO
     order_t to,ro;
     for(k = 0;k < count;k++) {
         to = o[vo[k]];
         if (to.order != type) continue; //skip entries of incorrect order type
-        int a,d;
+        int a,d,temp;
         int c = to.country;
         int tc = to.tcountry;
         int sc = to.scountry;
@@ -427,8 +425,68 @@ int validate(int type) {
                 }
                 break;
             case 3 : //convoy TODO
-                printf("Analysing a convoy order... defense=%i vs attack=%i... ",d,a);
-                printf(" coming soon.\r\n");
+                //RULE 1: dislodgment of a fleet in a convoy can cause convoy to fail
+                //RULE 2: if convoyed army would standoff at destination, convoy fails
+                if (g[c].occupy_type == 0) { //army convoy order
+                    printf("validating army convoy order... ");
+                    //look for RULE 2
+                    d = g[c].aS; //TODO figure out how to add support strength to convoy troops
+                    check = 1;
+                    for (j = 0;j < count;j++) {
+                       if (j == k) continue; 
+                       ro = o[vo[j]];     
+                       a = g[ro.country].aS;
+                       if ((ro.tcountry == tc)&&(a == d)&&(ro.type == 1)) {
+                           temp = ro.country;
+                           check = -1;  //found conflicting move
+                       }
+                       if ((ro.tcountry == tc)&&(a > d)&&(ro.type == 1)) {
+                           temp = ro.country;
+                           check = -2;//found conflicting move
+                       }
+                    }
+                    if (check == 1) {
+                        printf("success! \r\n");
+                        o[vo[k]].confirmed = 1;
+                    } else if (check == -1) {
+                        printf("failed! standoff with c-%i! \r\n",temp);
+                        o[vo[k]].confirmed = 1;
+                        o[vo[k]].valid = 0; //invalidate
+                    } else if (check == -2) {
+                        printf("failed! move with greater strength from c-%i! \r\n",temp);
+                        o[vo[k]].confirmed = 1;
+                        o[vo[k]].valid = 0; //invalidate
+                    }
+                } else if (g[c].occupy_type == 1) { //fleet convoy order
+                    printf("validating fleet convoy order... ");
+                    d = g[c].aS; //TODO figure out how to add support strength to convoy troops
+                    check = 1;
+                    for (j = 0;j < count;j++) {
+                        if (j == k) continue;
+                        ro = o[vo[j]];     
+                        a = g[ro.country].aS;
+                        if ((ro.type == 1)&&(a > d)) { //found greater move
+                            check = -1;
+                            temp = ro.country;
+                        }
+                    }
+                    if (check == 1) {
+                        printf("success! \r\n");
+                        o[vo[k]].confirmed = 1;
+                    } else {
+                        printf("failed! was dislodged by c-%i! \r\n",temp);
+                        o[vo[k]].confirmed = -2; //mark order for resolution
+                        Rneeded = 1;
+                        //invalidate convoy order
+                        for (j = 0;j < count;j++) {
+                            ro = o[vo[j]];     
+                            if ((ro.type==3)&&(ro.tcountry==tc)) {
+                                o[vo[j]].valid = 0;
+                                o[vo[j]].confirmed = 1;
+                            }
+                        }
+                    }
+                }
                 break;
             default :
                 break;

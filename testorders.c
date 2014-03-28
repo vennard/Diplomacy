@@ -120,7 +120,7 @@ int iorder(int s) {
                     }
                     a++;
                  }
-                 r.scountry = rand() % 48;
+                 if (r.scountry == -1) r.scountry = rand() % 48;
               } else { //fleet
                     while(temp != -1) {
                        temp = nc[a];
@@ -130,7 +130,7 @@ int iorder(int s) {
                        }
                        a++;
                     }
-                r.scountry = rand() % 48;
+                if (r.scountry == -1) r.scountry = rand() % 48;
                 }
                 //choose correct target type and region
                 a = 0;
