@@ -22,7 +22,7 @@ switch (i) {
 case 0: //ode
 r[i].type = 0;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 5; //str
 r[i].ncountrys[1] = 1; //vis
@@ -31,7 +31,7 @@ break;
 case 1: //vis
 r[i].type = 0;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 0; //ode
 r[i].ncountrys[1] = 5; //str
@@ -43,7 +43,7 @@ break;
 case 2: //war
 r[i].type = 0;
 r[i].occupy_type = 0;
-r[i].supply = 1;
+r[i].supply = 0;
 r[i].player = 0;
 r[i].ncountrys[0] = 1; //vis
 r[i].ncountrys[1] = 7; //wkr
@@ -54,7 +54,7 @@ break;
 case 3: //bre
 r[i].type = 0;
 r[i].occupy_type = -1;
-r[i].supply = 1;
+r[i].supply = -1;
 r[i].player = -1;
 r[i].ncountrys[0] = 2; //war
 r[i].ncountrys[1] = 8; //nar
@@ -74,7 +74,7 @@ break;
 case 5: //str
 r[i].type = 1;
 r[i].occupy_type = 1;
-r[i].supply = 1;
+r[i].supply = 0;
 r[i].player = 0;
 r[i].ncountrys[0] = 0; //ode
 r[i].ncountrys[1] = 1; //vis
@@ -86,7 +86,7 @@ break;
 case 6: //dan
 r[i].type = 1;
 r[i].occupy_type = 1;
-  r[i].supply = 1;
+  r[i].supply = 0;
 r[i].player = 0;
 r[i].ncountrys[0] = 5; //str
 r[i].ncountrys[1] = 1; //vis
@@ -98,7 +98,7 @@ break;
 case 7: //wkr
 r[i].type = 0;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 1; //vis
 r[i].ncountrys[1] = 6; //dan
@@ -110,7 +110,7 @@ break;
   case 8: //nar
 r[i].type = 0;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 2; //war
 r[i].ncountrys[1] = 7; //wkr
@@ -123,7 +123,7 @@ break;
 case 9: //wes
 r[i].type = 1;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 8; //nar
 r[i].ncountrys[1] = 17; //rig
@@ -135,7 +135,7 @@ break;
 case 10: //kat
 r[i].type = 2;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 5; //str
 r[i].ncountrys[1] = 11; //cop
@@ -149,7 +149,7 @@ break;
 case 11: //cop
 r[i].type = 1;
 r[i].occupy_type = -1;
-r[i].supply = 1;
+r[i].supply = -1;
 r[i].player = -1;
 r[i].ncountrys[0] = 10; //kat
 for (j=1;j<12;j++) r[i].ncountrys[j] = -1;
@@ -157,7 +157,7 @@ break;
 case 12: //sba
 r[i].type = 2;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 5; //str
 r[i].ncountrys[1] = 10; //kat
@@ -172,7 +172,7 @@ break;
 case 13: //mba
 r[i].type = 2;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 12; //sba
 r[i].ncountrys[1] = 16; //hab
@@ -186,7 +186,7 @@ break;
 case 14: //kon
 r[i].type = 1;
 r[i].occupy_type = -1;
-r[i].supply = 1;
+r[i].supply = -1;
 r[i].player = -1;
 r[i].ncountrys[0] = 6; //dan
 r[i].ncountrys[1] = 12; //sba
@@ -199,7 +199,7 @@ break;
 case 15: //ron
 r[i].type = 1;
 r[i].occupy_type = -1;
-r[i].supply = 1;
+r[i].supply = -1;
 r[i].player = -1;
 r[i].ncountrys[0] = 12; //sba
 r[i].ncountrys[1] = 16; //hab
@@ -208,7 +208,7 @@ for (j=2;j<12;j++) r[i].ncountrys[j] = -1;
   case 16: //hab
 r[i].type = 2;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -1;
 r[i].player = -1;
 r[i].ncountrys[0] = 15; //ron
 r[i].ncountrys[1] = 12; //sba
@@ -247,7 +247,7 @@ break;
 case 19: //tal
 r[i].type = 1;
 r[i].occupy_type = -1;
-r[i].supply = 1;
+r[i].supply = -1;
 r[i].player = -1;
 r[i].ncountrys[0] = 17; //rig
 r[i].ncountrys[1] = 20; //gor
@@ -259,7 +259,7 @@ break;
 case 20: //gor
 r[i].type = 2;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 21; //saa
 r[i].ncountrys[1] = 22; //nba
@@ -270,7 +270,7 @@ break;
 case 21: //saa
 r[i].type = 1;
 r[i].occupy_type = -1;
-r[i].supply = 1;
+r[i].supply = -1;
 r[i].player = -1;
 r[i].ncountrys[0] = 20; //gor
 r[i].ncountrys[1] = 22; //nba
@@ -279,7 +279,7 @@ break;
 case 22: //nba
 r[i].type = 2;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 13; //mba
 r[i].ncountrys[1] = 23; //sli
@@ -297,7 +297,7 @@ break;
 case 23: //sli
 r[i].type = 1;
 r[i].occupy_type = -1;
-r[i].supply = 1;
+r[i].supply = -1;
 r[i].player = -1;
 r[i].ncountrys[0] = 13; //mba
 r[i].ncountrys[1] = 24; //gos
@@ -307,7 +307,7 @@ break;
 case 24: //gos
 r[i].type = 2;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 25; //bol
 r[i].ncountrys[1] = 31; //sto
@@ -322,7 +322,7 @@ break;
 case 25: //bol
 r[i].type = 1;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 26; //mal
 r[i].ncountrys[1] = 10; //kat
@@ -336,7 +336,7 @@ break;
 case 26: //mal
 r[i].type = 1;
 r[i].occupy_type = -1;
-r[i].supply = 1;
+r[i].supply = -1;
 r[i].player = -1;
 r[i].ncountrys[0] = 10; //kat
 r[i].ncountrys[1] = 25; //bol
@@ -347,7 +347,7 @@ break;
 case 27: //ska
 r[i].type = 2;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 10; //kat
 r[i].ncountrys[1] = 28; //got
@@ -356,7 +356,7 @@ break;
 case 28: //got
 r[i].type = 1;
 r[i].occupy_type = 1;
-r[i].supply = 1;
+r[i].supply = 2;
 r[i].player = 2;
 r[i].ncountrys[0] = 27; //ska
 r[i].ncountrys[1] = 10; //kat
@@ -368,7 +368,7 @@ break;
 case 29: //van
 r[i].type = 2;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 28; //got
 r[i].ncountrys[1] = 23; //sil
@@ -377,7 +377,7 @@ break;
 case 30: //sil
 r[i].type = 0;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 29; //van
 r[i].ncountrys[1] = 28; //got
@@ -390,7 +390,7 @@ break;
 case 31: //sto
 r[i].type = 1;
 r[i].occupy_type = 0;
-r[i].supply = 1;
+r[i].supply = 2;
 r[i].player = 2;
 r[i].ncountrys[0] = 25; //bol
 r[i].ncountrys[1] = 30; //sil
@@ -402,7 +402,7 @@ break;
 case 32: //ala
 r[i].type = 1;
 r[i].occupy_type = -1;
-r[i].supply = 1;
+r[i].supply = -1;
 r[i].player = -1;
 r[i].ncountrys[0] = 24; //gos
 r[i].ncountrys[1] = 33; //sgo
@@ -412,7 +412,7 @@ break;
 case 33: //sgo
 r[i].type = 2;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 32; //ala
 r[i].ncountrys[1] = 24; //gos
@@ -427,7 +427,7 @@ break;
 case 34: //hel
 r[i].type = 1;
 r[i].occupy_type = 1;
-r[i].supply = 1;
+r[i].supply = 3;
 r[i].player = 3;
 r[i].ncountrys[0] = 22; //nba
 r[i].ncountrys[1] = 33; //sgo
@@ -440,7 +440,7 @@ break;
 case 35: //gof
 r[i].type = 2;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 22; //nba
 r[i].ncountrys[1] = 34; //hel
@@ -453,7 +453,7 @@ break;
 case 36: //lla
 r[i].type = 2;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 18; //stp
 r[i].ncountrys[1] = 39; //sai
@@ -464,7 +464,7 @@ break;
 case 37: //kuy
 r[i].type = 1;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 36; //lla
 r[i].ncountrys[1] = 38; //kuo
@@ -475,7 +475,7 @@ break;
 case 38: //kuo
 r[i].type = 1;
 r[i].occupy_type = 0;
-r[i].supply = 1;
+r[i].supply = 3;
 r[i].player = 3;
 r[i].ncountrys[0] = 36; //lla
 r[i].ncountrys[1] = 39; //sai
@@ -489,7 +489,7 @@ break;
 case 39: //sai
 r[i].type = 1;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 18; //stp
 r[i].ncountrys[1] = 36; //lla
@@ -501,7 +501,7 @@ break;
 case 40: //vas
 r[i].type = 1;
 r[i].occupy_type = 1;
-r[i].supply = 1;
+r[i].supply = 3;
 r[i].player = 3;
 r[i].ncountrys[0] = 34; //hel
 r[i].ncountrys[1] = 33; //sgo
@@ -513,7 +513,7 @@ break;
 case 41: //ngo
 r[i].type = 2;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 33; //sgo
 r[i].ncountrys[1] = 42; //sun
@@ -526,7 +526,7 @@ break;
 case 42: //sun
 r[i].type = 1;
 r[i].occupy_type = 1;
-r[i].supply = 1;
+r[i].supply = 2;
 r[i].player = 2;
 r[i].ncountrys[0] = 30; //sil
 r[i].ncountrys[1] = 43; //stj
@@ -539,7 +539,7 @@ break;
 case 43: //stj
 r[i].type = 0;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 30; //sil
 r[i].ncountrys[1] = 42; //sun
@@ -549,7 +549,7 @@ break;
 case 44: //keb
 r[i].type = 1;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 42; //sun
 r[i].ncountrys[1] = 43; //stj
@@ -560,7 +560,7 @@ break;
 case 45: //tor
 r[i].type = 1;
 r[i].occupy_type = -1;
-r[i].supply = 1;
+r[i].supply = -1;
 r[i].player = -1;
 r[i].ncountrys[0] = 44; //keb
 r[i].ncountrys[1] = 47; //ima
@@ -571,7 +571,7 @@ break;
 case 46: //oul
 r[i].type = 1;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 41; //ngo
 r[i].ncountrys[1] = 45; //tor
@@ -583,7 +583,7 @@ break;
 case 47: //ima
 r[i].type = 0;
 r[i].occupy_type = -1;
-r[i].supply = 0;
+r[i].supply = -2;
 r[i].player = -1;
 r[i].ncountrys[0] = 45; //tor
 r[i].ncountrys[1] = 46; //oul

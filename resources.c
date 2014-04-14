@@ -56,7 +56,7 @@ int printgame() {
             case 2 : printf("(water) "); break;
             default : break;
         }
-        if (g[k].supply == 1) printf("+supply ");
+        if (g[k].supply != -2) printf("+supply ");
         switch (g[k].occupy_type) {
             case -1 : printf("is not occupied.\r\n"); break;
             case 0 : printf("is occupied by a troop "); break;  
@@ -73,6 +73,48 @@ int printgame() {
         }
 
     }
+}
+
+//checks if supply phase is needed, and what countrys need to remove units
+//returns Sneeded
+int supplycheck(){
+    printf("Checking supply control.\r\n");
+    int Sneeded = 0;
+    int numunits = 0;
+    int numsupplys = 0;
+    int i, j, k, old, diff;
+    //first check for supply turnovers
+    for (k = 0;k < 48;k++) {
+        if ((g[k].supply != g[k].player)&&(g[k].occupy_type != -1)) {
+            old = g[k].supply;
+            g[k].supply = g[k].player;
+            printf("Supply turnover from player %i to player %i (country %i)!\r\n", old, g[k].supply, k);
+        }
+    }
+    //check units vs. supplys
+    for (i = 0;i < 4;i++) { //loop through players
+        for (j = 0;j < 48;j++) { //look for players units
+            if ((g[j].player == i)&&(g[j].occupy_type != -1)) numunits++;
+            if (g[j].supply == i) numsupplys++;
+        }
+        diff = numsupplys - numunits; 
+        if (diff > 0) {
+            Sneeded = 1;
+            printf("Player %i gets to gain %i more units!\r\n", i, diff);
+        } else if (diff < 0) {
+            Sneeded = 1;
+            printf("Player %i loses %i units!\r\n", i, -1*diff);
+        } else {
+            printf("Player %i has equal supply and unit control!\r\n", i);
+        }
+    }
+    return Sneeded;
+}
+
+//check supply phase orders -- will place new unit on adjacent square if no order selected TODO
+int supplyphase() {
+    //check all orders for valid placement of new units / removal
+    return 0;
 }
   
 //returns number of orders
@@ -152,7 +194,7 @@ int firstvalidate(void) {
 		int tc = o[i].tcountry;
 		int sc = o[i].scountry;
         int or = o[i].order;
-        printf("ORDER %i: player - %i, type - %i, order - %i, country - %i, tcountry - %i, scountry - %i\r\n",i,p,t,or,c,tc,sc);
+    //    printf("ORDER %i: player - %i, type - %i, order - %i, country - %i, tcountry - %i, scountry - %i\r\n",i,p,t,or,c,tc,sc);
         if (o[i].valid == -1) continue; //marked as invalid duplicate 
 	  	if (g[c].player != p) continue; //Player doesn't match 
         if (g[c].occupy_type == -1) continue; //Region doesn't have unit
@@ -211,11 +253,15 @@ int firstvalidate(void) {
                 break;
             case 2 : //support
                 //check correct target country types
-                if ((t == 0)&&(g[tc].type == 2)) continue;  
-                if ((t == 1)&&(g[tc].type == 0)) continue;
+                if (tc != -1) {
+                    if ((t == 0)&&(g[tc].type == 2)) continue;  
+                    if ((t == 1)&&(g[tc].type == 0)) continue;
+                }
+                if ((t == 0)&&(g[sc].type == 2)) continue;
+                if ((t == 1)&&(g[sc].type == 0)) continue;
                 if (g[sc].occupy_type == -1) continue; 
                 if (!isneighbor(sc,g[c].ncountrys)) continue; 
-                if (tc == -1) { //supporting a hold,convoy, or support
+                if (tc == -1) { //supporting a hold, convoy, or support
 	  		        printf("#%i support hold | ",i);
                     o[i].valid = 1;
                     validOrders++;
@@ -239,10 +285,11 @@ int firstvalidate(void) {
                 }
                 break;
             case 3 : //convoy
-                if (g[c].occupy_type == 0) { //land units convoy order
+                if (g[c].occupy_type == 0) { //army convoy order
                     if (g[c].type != 1) continue; //region must be coastal
-                    //land unit must be neighbor of fleet & a fleet must exist
-                    if ((!isneighbor(c, g[sc].ncountrys))||(g[sc].occupy_type != 1)) continue; 
+                    //land unit must be neighbor of fleet & a fleet must exist TODO double check this rule
+                    //if ((!isneighbor(c, g[sc].ncountrys))||(g[sc].occupy_type != 1)) continue; 
+                    if (sc != -1) continue;
                     //check path for valid fleets to target country
                     if (checkconvoy(c,tc,g[c].ncountrys,-1) != 1) continue;
 	  		        printf("#%i troop convoy | ",i);
@@ -292,7 +339,7 @@ int execute() {
     int k;
     printf("\r\n");
     for(k = 0;k < numO;k++) {
-        if(o[k].confirmed == 1) {
+        if((o[k].confirmed == 1)&&(o[k].valid == 1)) {
             order_t co = o[k];
             switch (co.order) {
                 case 0 : 
@@ -307,7 +354,9 @@ int execute() {
                     break;
                 case 3 :
                     printf(" CONVOY P%i U%i C%i +> (SC%i -> TC%i) |",co.player,co.type,co.country,co.scountry,co.tcountry);
-                    //TODO if troop moveunit(co.country, co.tcountry) 
+                    if (co.type == 0) { //troop convoy order
+                        moveunit(co.country,co.tcountry);
+                    }
                     break;
                 default :
                     break;

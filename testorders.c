@@ -116,15 +116,8 @@ int iorder(int s) {
              nc = g[country].ncountrys;
              //choose correct support region type 
              if (r.type == 0) { //army
-                 while(temp != -1) {
-                    temp = nc[a];
-                    if (g[temp].type==2) {
-                        r.scountry = temp; 
-                        temp = -1;
-                    }
-                    a++;
-                 }
-                 if (r.scountry == -1) r.scountry = rand() % 48;
+                 r.tcountry = rand() % 48; //simple implementation
+                 r.scountry = -1;
               } else { //fleet
                     while(temp != -1) {
                        temp = nc[a];

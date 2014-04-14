@@ -77,6 +77,15 @@ int waitloop(int waittime) {
     printf("timer complete after %i seconds.\r\n",t);
 }
 
+//for now mode - 0 equals random and 1 - user
+int getorders(int mode, int seed, int numorders, char file[]) {
+    if (mode == 0) {
+        return getTestOrders(seed,numorders,file);
+    } else {
+        return makeOrders();
+    }
+}
+
 //polling during waits for pause GPIO input
 int main(int argc, char *argv[]) {
     printf("Welcome to Diplomacy!\r\n");
@@ -102,11 +111,7 @@ int main(int argc, char *argv[]) {
         printf("--------- Start of year %i ----------\r\n\r\n",year);
         printf("--------- Spring %i --------- \r\n",year);
         waitloop(D_PHASE); //Start of Order & Diplomacy phase
-        if (customorders) {
-            numO = makeOrders();
-        } else {
-	        numO = getTestOrders(testseed,T_ORDERS,"/tmp/torders");
-        }
+        numO = getorders(customorders,testseed,T_ORDERS,"/tmp/torders");
         testseed+=5;
         arbitor();
         //starting retreat phase
@@ -114,21 +119,16 @@ int main(int argc, char *argv[]) {
             Rneeded = 0;
             printf("Starting retreat phase for spring %i.\r\n",year);
             waitloop(R_PHASE);
-	        numO = getTestOrders(testseed,T_ORDERS,"/tmp/torders");
+            numO = getorders(customorders,testseed,T_ORDERS,"/tmp/torders");
             testseed+=5;
             arbitor();
-            //gen orders and call arbitrator
         } else {
             printf("Skipping retreat phase for spring %i.\r\n",year);
         }
         // ---- Start of Fall ----
         printf("\r\n\r\n--------- Fall %i --------- \r\n",year);
         waitloop(D_PHASE);
-        if (customorders) {
-            numO = makeOrders();
-        } else {
-	        numO = getTestOrders(testseed,T_ORDERS,"/tmp/torders");
-        }
+        numO = getorders(customorders,testseed,T_ORDERS,"/tmp/torders");
         testseed+=5;
         arbitor();
         //starting retreat phase
@@ -136,21 +136,22 @@ int main(int argc, char *argv[]) {
             Rneeded = 0;
             printf("Starting retreat phase for fall %i.\r\n",year);
             waitloop(R_PHASE);
-	        numO = getTestOrders(testseed,T_ORDERS,"/tmp/torders");
+            numO = getorders(customorders,testseed,T_ORDERS,"/tmp/torders");
             testseed++;
             arbitor();
             //gen orders and call arbitrator
         } else {
             printf("Skipping retreat phase for fall %i.\r\n",year);
         }
-        //TODO add check to unset Sneeded - ie check for is supplys have changed 
+        supplycheck();
         if (Sneeded) {
             Sneeded = 0;
             printf("Starting supply phase for fall %i.\r\n",year);
             waitloop(S_PHASE);
-	        numO = getTestOrders(testseed,T_ORDERS,"/tmp/torders");
+            numO = getorders(customorders,testseed,T_ORDERS,"/tmp/torders");
             testseed++;
-            arbitor();
+            //arbitor();
+            supplyphase();
         } else {
             printf("skipping supply phase for fall %i.\r\n",year);
         }
@@ -164,10 +165,7 @@ int main(int argc, char *argv[]) {
         printf("\r\n\r\n");
         year++;
         menu();
-        //gameRunning = 0; //TODO remove
     }
-
-
     return 0;
 }
 
