@@ -64,6 +64,8 @@ int iorder(int s) {
     r.country = country;
     switch (r.order) {
         case 0 : //hold
+            r.tcountry = -1;
+            r.scountry = -1;
             break;
         case 1 : //move
             nc = g[country].ncountrys;
@@ -73,6 +75,7 @@ int iorder(int s) {
             }
             int m = rand() % i;
             r.tcountry = nc[m];
+            r.scountry = -1;
             break; 
         case 2 : //support
             movetype = rand() % 2;
@@ -83,6 +86,7 @@ int iorder(int s) {
                     if (g[temp].occupy_type!=-1) r.scountry = temp;
                     a++;
                 }
+                r.tcountry = -1;
             } else { //attacking support
                 nc = g[country].ncountrys;
                 temp = 0;
@@ -152,6 +156,55 @@ int iorder(int s) {
     return 0;
 }
 
+//allows user to enter custom commands for each round
+int makeOrders() {
+    int stop = 0;
+    int num = 0;
+    int t;
+	printf("Choosing your own orders..\r\n");
+    ptr = (int *) malloc(sizeof(order_t));
+    order_t *temp = (order_t*) ptr; 
+    while (stop == 0) {
+        printf("Enter order #%i:\r\n",num);
+        printf("player= ");
+        scanf("%i", &t);
+        temp->player = t;
+        printf("order= ");
+        scanf("%i", &t);
+        temp->order = t;
+        printf("type= ");
+        scanf("%i", &t);
+        temp->type = t;
+        printf("country= ");
+        scanf("%i", &t);
+        temp->country = t;
+        if (temp->order != 0) { 
+            printf("tcountry= ");
+            scanf("%i", &t);
+            temp->tcountry = t;
+            if (temp->order != 1) { 
+                printf("scountry= ");
+                scanf("%i", &t);
+                temp->scountry = t;
+            } else {
+                temp->scountry = -1;
+            }
+        } else {
+            temp->tcountry = -1;
+        }
+        printf("Enter 0 to continue");
+        scanf("%i", &t);
+        stop = t;
+        printf("\r\n");
+        temp->valid = 0;
+        temp->confirmed = 0;
+        o[num] = *temp;
+        num++;
+   }
+   free(ptr);
+   return num;
+}
+
 int genOrders(int seed, int numOrders, char out[]) {
     ptr = (int *) malloc(sizeof(r));
 	printf("Generating %i Orders..\r\n",numOrders);
@@ -181,40 +234,6 @@ int genOrders(int seed, int numOrders, char out[]) {
 
    int i;
    for (i = 0; i < ordersLeft; i++) {
-/*
-      r.player = rand() % 4;
-      int order_num = rand() % 4;
-		r.order = order_num;
-		//Get random type (Fleet or Army)
-		r.type = rand() % 2;
-		//Get random home country
-		r.country = rand() % 48;
-		//Set to country and support country based on order
-		int tc = rand() % 48;
-		int sc = rand() % 48;
-		if (order_num == 0) {
-			//hold
-			r.tcountry = -1;
-			r.scountry = -1;
-		} else if (order_num == 1) {
-  			//move
-			r.tcountry = tc;
-			r.scountry = -1;
-		} else if (order_num == 2) {
-			//support
-			r.tcountry = tc;
-			r.scountry = sc;
-		} else if (order_num == 3) {
-			//convoy
-			r.tcountry = tc;
-			r.scountry = sc;
-		}
-        */
-		//Print output
-		/*
-		printf("%i: Player - %i, Order - %i, Army/Fleet - %i, Country - %i, ",i,r.player,r.order,r.type,r.country);
-		printf("To Country - %i, Support Country - %i.\r\n",r.tcountry,r.scountry);
-		*/
         iorder(seed);
         seed += 3;
         seed = seed * 2;

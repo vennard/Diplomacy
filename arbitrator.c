@@ -13,16 +13,20 @@
 
 int numValidOrders = 0;
 
+//TODO add support for validating retreat and supply rounds
 int arbitor() {
 	printf("Starting the Arbitrator...\r\n");
     removeduplicates();
     numValidOrders = firstvalidate();
 	if (numValidOrders == -1) perror("first validate failed");
-    //TODO assign all units who have not been assigned a move a hold order
-
-    validate(2);
-    validate(1);
+    insertholds(); //assign all unordered units a hold order
+    evaluate(); //assigns attack and defensive strengths to valid orders
     validate(3);
+    evaluate(); //revaluate after finding invalidated convoys 
+    validate(2);   
+    evaluate(); //revaluate after finding invalidated supports
+    validate(1);
+    evaluate(); //revalute after finding invalidated moves 
     validate(0);
 
     execute();

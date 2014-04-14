@@ -12,7 +12,7 @@
 #define D_PHASE 1 //will be minutes later, seconds for now
 #define R_PHASE 1
 #define S_PHASE 1
-#define T_ORDERS 10
+#define T_ORDERS 5
 
 time_t timestart,gstart,gend;
 time_t stimer,etimer;
@@ -22,12 +22,13 @@ int gameRunning = 0;
 int testseed = 18;
 int Rneeded = 0; //variables to eliminate unecessary phases
 int Sneeded = 0;
+int customorders = 0;
 
 //Reads input from zedboard GPIO TODO just rework entire menu
 //Saves game based on binary coding from gpio
 int menu() {
     //must save time of game now TODO
-    printf("Menu: c - continue,  0 - start new game, 1 - Exit, more to come later...\r\n");
+    printf("Menu: c - continue with random orders, a - submit custom orders,  0 - start new game, 1 - Exit, more to come later...\r\n");
     int i = -1;
     char input[16];
     while (i == -1) {
@@ -40,6 +41,10 @@ int menu() {
             i = 0;    
         } else if (strcmp(input,"1") == 0) {
             printf("selected Exit!\r\n");
+        } else if (strcmp(input,"a") == 0) {
+            customorders = 1;
+            printf("Chose to enter custom orders... good luck\r\n");
+            i = 0;    
         } else {    
             printf("you typed %s which is clearly just wrong. Wrong!\r\n",input);
         }
@@ -48,12 +53,12 @@ int menu() {
     return 0; //0 = start new game
 }
 
-//returns status of game GPIO (ie pause button)
+//returns status of game GPIO (ie pause button) TODO
 int paused() {
     return 0;
 }
 
-//checks if the game has been won
+//checks if the game has been won TODO
 int gamewon() {
     return 0;
 }
@@ -97,7 +102,11 @@ int main(int argc, char *argv[]) {
         printf("--------- Start of year %i ----------\r\n\r\n",year);
         printf("--------- Spring %i --------- \r\n",year);
         waitloop(D_PHASE); //Start of Order & Diplomacy phase
-	    numO = getTestOrders(testseed,T_ORDERS,"/tmp/torders");
+        if (customorders) {
+            numO = makeOrders();
+        } else {
+	        numO = getTestOrders(testseed,T_ORDERS,"/tmp/torders");
+        }
         testseed+=5;
         arbitor();
         //starting retreat phase
@@ -115,7 +124,11 @@ int main(int argc, char *argv[]) {
         // ---- Start of Fall ----
         printf("\r\n\r\n--------- Fall %i --------- \r\n",year);
         waitloop(D_PHASE);
-	    numO = getTestOrders(testseed,T_ORDERS,"/tmp/torders");
+        if (customorders) {
+            numO = makeOrders();
+        } else {
+	        numO = getTestOrders(testseed,T_ORDERS,"/tmp/torders");
+        }
         testseed+=5;
         arbitor();
         //starting retreat phase
