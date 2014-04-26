@@ -213,6 +213,8 @@ uint8_t rf2addresses[] = {
 	0x09,  //ADDR
 	0x06,  //PKTLEN
 	0x20,  //WORCTRL
+	0x04,  //SYNC1
+	0x05,  //SYNC0
 };
 
 uint8_t rf2Settings[] = {
@@ -252,6 +254,9 @@ uint8_t rf2Settings[] = {
 	0x00,  //Data for ADDR
 	0x05,  //Data for PKTLEN
 	0xFB,  //Data for WORCTRL
+	0xAB,  //Data for SYNC1
+	0xCD,  //Data for SYNC0
+	
 };
 
 static void transfer2(int fd, uint8_t *header, uint8_t *tx)
@@ -356,7 +361,7 @@ static void configure(int fd) {
 
 	//Configure chip
 	sleep(1);
-	for (i = 0;i < 36;i++) {
+	for (i = 0;i < 38;i++) {
 		//write to configuration registers
 		tx[0] = rf2addresses[i];	
 		tx[1] = rf2Settings[i];
