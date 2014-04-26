@@ -20,6 +20,7 @@
 #include <sys/ioctl.h>
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
+#include "cc430region.h"
 
 /*
  *CC1101 Transfer Details (from the datasheet)
@@ -169,8 +170,8 @@ static void pabort(const char *s)
 static const char *device = "/dev/spidev0.0";
 static uint8_t mode;
 static uint8_t bits = 8;
-//static uint32_t speed = 50000;
-static uint32_t speed = 500000;
+//static uint32_t speed = 500000;
+static uint32_t speed = 1000000;
 //static uint32_t speed = 250000;
 static uint16_t delay = 10;
 
@@ -254,8 +255,8 @@ uint8_t rf2Settings[] = {
 	0x00,  //Data for ADDR
 	0x05,  //Data for PKTLEN
 	0xFB,  //Data for WORCTRL
-	0xAB,  //Data for SYNC1
-	0xCD,  //Data for SYNC0
+	0xCD,  //Data for SYNC1
+	0xAB,  //Data for SYNC0
 	
 };
 
@@ -329,7 +330,6 @@ static void configure(int fd) {
 	if (ret < 1) pabort("can't send spi message");
 	printf("Reset CC1101 with 0x%x (response 0x%x)!\r\n",tx[0],rx[0]);
 	sleep(5);
-
 	//Wait until CC1101 is in idle before configuring
 	printf("Chip has been reset... sending to idle state.\r\n ");
  	int idle = 0;	
@@ -343,7 +343,6 @@ static void configure(int fd) {
 		printf("check returned - %x \r\n",stat);
 		if (stat == 0x00) {
 			idle = 1;
-		
 			printf("CC1101 is in IDLE. Continuing to configuration...\r\n");
 		} else if (stat == 0x70) {
 			sleep(1);
@@ -489,8 +488,73 @@ void readfifo(int fd)
 	transfer2(fd, &tx[0], &tx[1]);
 }
 
+void gametransfer(int fd) {
+	printf("Starting Data transfer for round...");	
+	uint8_t tx[6]; 
+	uint8_t rx[6];
+	int ret;
+
+	//Transfer Phase Type
+	tx[0] = TX_BYTE;
+	tx[1] = 0x00;
+	transfer2(fd,&tx[0],&tx[1]); 
+	printf(" sent phase type byte.\r\n");
+
+	//Transfer Region Data
+	int i;
+	printf("Sending Region Data... ");
+	for (i = 0;i < 48;i++) {
+		printf("%i ",i);
+		tx[0] = TX_BURST;
+		tx[1] = (uint8_t)g[i].player;	
+		tx[2] = (uint8_t)g[i].occupy_type;
+		struct spi_ioc_transfer tr = {
+			.tx_buf = (unsigned long)tx,
+			.rx_buf = (unsigned long)rx,
+			.len = 3,
+			.delay_usecs = delay,
+			.speed_hz = speed,
+			.bits_per_word = bits,
+		};
+		ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
+		if (ret < 1) pabort("can't send spi message");
+	}
+	
+	//Check for Turn Up // Btn Press
+	//TODO implement basic timing loop
+	printf("complete!\r\n Now waiting for turn up || btn press... ");
+	sleep(10);
+	printf(" done waiting... sending out 0xBEEF to lock controllers!\r\n");
+	tx[0] = TX_BYTE;
+	tx[1] = 0xBF;
+	transfer2(fd, &tx[0], &tx[1]);
+	printf("Sent Locked Byte 0xBF\r\n"); 
+	
+	
+
+	
+	
+}
+
 void transfer(int fd, uint8_t *header, uint8_t *tx)
 {
+	a.owner = 1;
+	a.unit_type = 5;
+	a.order = 2;
+        a.tcountry = 42;
+	a.scountry = 24;
+	b.owner = 2;
+	b.unit_type = 1;
+	b.order = 1;
+        b.tcountry = 33;
+	b.scountry = 33;
+	c.owner = 3;
+	c.unit_type = 1;
+	c.order = 0;
+        c.tcountry = 47;
+	c.scountry = 21;
+	int ret = 0;
+	//uint8_t digit = 0x01;
 	uint8_t txbuf[6] = {0x7F,0xAA, 0xBB, 0xCC, 0xDD, 0xEE};
 	uint8_t ttx[6] = {0x3B,0x35}; //flush tx buffer and enable tx
 	uint8_t rx[6] = {0,0,0,0,0,0};
@@ -501,7 +565,6 @@ void transfer(int fd, uint8_t *header, uint8_t *tx)
 		txbuf[m] = n; 
 		n++;
 	}
-	int ret;
 	//uint8_t ttx[2] = {0x03,0x0C};
 	/*
 	struct spi_ioc_transfer dr = {
@@ -515,11 +578,13 @@ void transfer(int fd, uint8_t *header, uint8_t *tx)
 	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &dr);
 	if (ret < 1) pabort("can't send spi message");
 */
-	printf("Transmitted: %x %x %x %x %x.\r\n",txbuf[1],txbuf[2],txbuf[3],txbuf[4],txbuf[5]);
+	//printf("Transmitting: %x %x %x %x %x.\r\n",txbuf[1],txbuf[2],txbuf[3],txbuf[4],txbuf[5]);
+        uint8_t ta[6] = {TX_BURST, a.owner, a.unit_type};	
+	printf("Transmitting sizeof cc430region = %i! \r\n",sizeof(cc430region_t));
 	struct spi_ioc_transfer fr = {
 		.tx_buf = (unsigned long)txbuf,
 		.rx_buf = (unsigned long)rx,
-		.len = 6,
+		.len = 3,
 		.delay_usecs = delay,
 		.speed_hz = speed,
 		.bits_per_word = bits,
@@ -652,8 +717,24 @@ static void parse_opts(int argc, char *argv[])
 	}
 }
 
+cc430region_t a, b, c;
 int main(int argc, char *argv[])
 {
+	a.owner = 1;
+	a.unit_type = 0;
+	a.order = 2;
+        a.tcountry = 42;
+	a.scountry = 24;
+	b.owner = 2;
+	b.unit_type = 1;
+	b.order = 1;
+        b.tcountry = 33;
+	b.scountry = 33;
+	c.owner = 3;
+	c.unit_type = 1;
+	c.order = 0;
+        c.tcountry = 47;
+	c.scountry = 21;
 	int ret = 0;
 	//uint8_t digit = 0x01;
 	int fd;
