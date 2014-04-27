@@ -17,4 +17,6 @@ extern int secondvalidate(void);
 extern int runspi(void*);
 extern void startspi(void);
 
+extern void examplegame(void);
+
 #endif

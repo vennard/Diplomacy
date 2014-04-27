@@ -18,7 +18,7 @@ int validOrders = 0;
 int numO = 0;
 
 void startspi() {
-    runspi((void*)g);
+    //runspi((void*)g);
 }
 
 int loadgamedata(char f[]) {
