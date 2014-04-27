@@ -21,6 +21,11 @@
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
 #include "cc430region.h"
+#include "region.h"
+#include "order.h"
+#include "include.h"
+
+
 
 /*
  *CC1101 Transfer Details (from the datasheet)
@@ -495,20 +500,10 @@ void gametransfer(int fd) {
 	int ret;
 
 	//Transfer Phase Type
-	tx[0] = TX_BYTE;
-	tx[1] = 0x00;
-	transfer2(fd,&tx[0],&tx[1]); 
-	printf(" sent phase type byte.\r\n");
-
-	//Transfer Region Data
-	int i;
-	printf("Sending Region Data... ");
-	for (i = 0;i < 48;i++) {
-		printf("%i ",i);
-		tx[0] = TX_BURST;
-		tx[1] = (uint8_t)g[i].player;	
-		tx[2] = (uint8_t)g[i].occupy_type;
-		struct spi_ioc_transfer tr = {
+	tx[0] = TX_BURST;
+	tx[1] = 0x88;
+	tx[2] = 0x00;
+	struct spi_ioc_transfer tr = {
 			.tx_buf = (unsigned long)tx,
 			.rx_buf = (unsigned long)rx,
 			.len = 3,
@@ -516,8 +511,41 @@ void gametransfer(int fd) {
 			.speed_hz = speed,
 			.bits_per_word = bits,
 		};
-		ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
+	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
+	if (ret < 1) pabort("can't send spi message");
+	printf(" sent phase type byte.\r\n");
+	sleep(1);
+	
+	//Transfer Region Data
+	int i;
+	printf("Sending Region Data... ");
+	for (i = 0;i < 48;i++) {
+	//Clear TX Buffer
+	tx[0] = _SFTX;
+	tx[1] = _SIDLE;
+	transfer2(fd,&tx[0],&tx[1]);
+	sleep(1);
+
+	tx[0] = _SNOP;
+	tx[1] = 0x35;
+	transfer2(fd,&tx[0],&tx[1]);
+	sleep(1);
+
+		tx[0] = TX_BURST;
+		tx[1] = 0x03; //player id	
+		tx[2] = 0x01; //unit type
+		printf("%i: sending 0x%x 0x%x\r\n ",i,tx[1],tx[2]);
+		struct spi_ioc_transfer rr = {
+			.tx_buf = (unsigned long)tx,
+			.rx_buf = (unsigned long)rx,
+			.len = 3,
+			.delay_usecs = delay,
+			.speed_hz = speed,
+			.bits_per_word = bits,
+		};
+		ret = ioctl(fd, SPI_IOC_MESSAGE(1), &rr);
 		if (ret < 1) pabort("can't send spi message");
+		sleep(1);
 	}
 	
 	//Check for Turn Up // Btn Press
@@ -530,31 +558,22 @@ void gametransfer(int fd) {
 	transfer2(fd, &tx[0], &tx[1]);
 	printf("Sent Locked Byte 0xBF\r\n"); 
 	
-	
-
+	//Start polling
+	for (i = 0;i < 4;i++) {
+		tx[1] = i; 
+		//transfer2(fd,&tx[0],&tx[1]);	
+		printf("Sent polling request for player %i!\r\n",i);
+		sleep(1);	
+		//Wait for complete byte before continuing
+		 	
+	}
 	
 	
 }
 
 void transfer(int fd, uint8_t *header, uint8_t *tx)
 {
-	a.owner = 1;
-	a.unit_type = 5;
-	a.order = 2;
-        a.tcountry = 42;
-	a.scountry = 24;
-	b.owner = 2;
-	b.unit_type = 1;
-	b.order = 1;
-        b.tcountry = 33;
-	b.scountry = 33;
-	c.owner = 3;
-	c.unit_type = 1;
-	c.order = 0;
-        c.tcountry = 47;
-	c.scountry = 21;
 	int ret = 0;
-	//uint8_t digit = 0x01;
 	uint8_t txbuf[6] = {0x7F,0xAA, 0xBB, 0xCC, 0xDD, 0xEE};
 	uint8_t ttx[6] = {0x3B,0x35}; //flush tx buffer and enable tx
 	uint8_t rx[6] = {0,0,0,0,0,0};
@@ -565,21 +584,6 @@ void transfer(int fd, uint8_t *header, uint8_t *tx)
 		txbuf[m] = n; 
 		n++;
 	}
-	//uint8_t ttx[2] = {0x03,0x0C};
-	/*
-	struct spi_ioc_transfer dr = {
-		.tx_buf = (unsigned long)ttx,
-		.rx_buf = (unsigned long)rx,
-		.len = 2,
-		.delay_usecs = delay,
-		.speed_hz = speed,
-		.bits_per_word = bits,
-	};
-	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &dr);
-	if (ret < 1) pabort("can't send spi message");
-*/
-	//printf("Transmitting: %x %x %x %x %x.\r\n",txbuf[1],txbuf[2],txbuf[3],txbuf[4],txbuf[5]);
-        uint8_t ta[6] = {TX_BURST, a.owner, a.unit_type};	
 	printf("Transmitting sizeof cc430region = %i! \r\n",sizeof(cc430region_t));
 	struct spi_ioc_transfer fr = {
 		.tx_buf = (unsigned long)txbuf,
@@ -592,41 +596,6 @@ void transfer(int fd, uint8_t *header, uint8_t *tx)
 	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &fr);
 	if (ret < 1) pabort("can't send spi message");
 	printf("Response: (status) 0x%x %x %x %x %x %x\r\n",rx[0],rx[1],rx[2],rx[3],rx[4],rx[5]);
-//	sleep(2);
-	/*
-	ttx[0] = 0x3F;
-	ttx[1] = 0xAA;
-	
-	struct spi_ioc_transfer dr = {
-		.tx_buf = (unsigned long)ttx,
-		.rx_buf = (unsigned long)rx,
-		.len = 2,
-		.delay_usecs = delay,
-		.speed_hz = speed,
-		.bits_per_word = bits,
-	};
-	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &dr);
-	if (ret < 1) pabort("can't send spi message");
-	//TODO RX PROCESSING
-	uint8_t rxbuf = rx[0] & 0x0F;
-	printf("RX FIFO AT %x \r\n",rxbuf);
-	if (rxbuf < 0x0F) {
-		printf("RX FIFO has something in it!!!\r\n");
-	}
-	ttx[0] = 0x3F;
-	ttx[1] = 0xFF;
-	struct spi_ioc_transfer rr = {
-		.tx_buf = (unsigned long)ttx,
-		.rx_buf = (unsigned long)rx,
-		.len = 2,
-		.delay_usecs = delay,
-		.speed_hz = speed,
-		.bits_per_word = bits,
-	};
-	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &rr);
-	if (ret < 1) pabort("can't send spi message");
-
-*/
 }
 
 
@@ -802,7 +771,8 @@ int main(int argc, char *argv[])
 		//uint8_t tx = TX_BYTE;
 		uint8_t td = 0xAA;
 		//uint8_t td = 0xAA;
-		transfer(fd, &tx, &td);
+		//transfer(fd, &tx, &td);
+		gametransfer(fd);
 		printf(" sent 5 byte burst.\r\n ");
 		//readfifo(fd);
 		sleep(1);
