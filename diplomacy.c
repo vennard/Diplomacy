@@ -88,7 +88,6 @@ int getorders(int mode, int seed, int numorders, char file[]) {
 
 //polling during waits for pause GPIO input
 int main(int argc, char *argv[]) {
-    runspi(); //TODO testing loop for SPI
     printf("Welcome to Diplomacy!\r\n");
     time(&timestart); //get start time
     printf("Current time - %s\r\n",asctime(localtime(&timestart)));
@@ -104,6 +103,7 @@ int main(int argc, char *argv[]) {
         default :
             break;
     }
+    startspi(); //TODO testing loop for SPI
 
     while (gameRunning) {
         // debug print of game status
