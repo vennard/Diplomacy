@@ -17,15 +17,15 @@
 
 //Registers for led writing from driver - thanks alex!
 //TODO place holders, need to find out locations
-#define SHIFT_FILE "/sys/kernel/ece453_pl/shift"
-#define DISPLAY_FILE "/sys/kernel/ece453_pl/display"
-#define DATA_FILE "/sys/kernel/ece453_pl/data"
-#define DATASIZE_FILE ""
-#define READY_FILE ""
-#define TMRMIN_FILE ""
-#define TMRSTART_FILE ""
-#define TMRMASK_FILE ""
-#define TMRUP_FILE ""
+#define SHIFT_FILE "/sys/kernel/ece453_digidiplo/shift"
+#define DISPLAY_FILE "/sys/kernel/ece453_digidiplo/display"
+#define DATA_FILE "/sys/kernel/ece453_digidiplo/data"
+#define DATASIZE_FILE "/sys/kernel/ece453_digidiplo/datasize"
+#define READY_FILE "/sys/kernel/ece453_digidiplo/ready"
+#define TMRMIN_FILE "/sys/kernel/ece453_digidiplo/tmrmins"
+#define TMRSTART_FILE "/sys/kernel/ece453_digidiplo/tmrstart"
+#define TMRMASK_FILE "/sys/kernel/ece453_digidiplo/tmrmaskintr"
+#define TMRUP_FILE "/sys/kernel/ece453_digidiplo/tmrtimeup"
 
 static uint8_t leds[39]; //last 6 bits unused 306 / 8 = 38.25
 
