@@ -14,4 +14,6 @@ extern int getTestOrders(int seed,int numOrders, char f[]);
 extern int firstvalidate(void);
 extern int secondvalidate(void);
 
+extern int runspi(void);
+
 #endif

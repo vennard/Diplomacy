@@ -1,9 +1,8 @@
 HEADERS = order.h region.h include.h
-OBJECTS = arbitrator.c testorders.c startgame.c resources.c diplomacy.c rxorders.c spi-testing.c
+OBJECTS = arbitrator.c testorders.c startgame.c resources.c diplomacy.c rxorders.c spi_comm.c
 SAFE= -Wall -Werror
 
-default: spi-testing
-#default: diplomacy
+default: diplomacy
 
 spi-testing: $(OBJECTS)
 	gcc $(OBJECTS) -o $@ 
