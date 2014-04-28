@@ -20,9 +20,13 @@
 #include <sys/ioctl.h>
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
+#include <time.h>
 #include "region.h"
 #include "order.h"
 #include "include.h"
+
+//User Definitions
+#define TIMEOUT 10  //in seconds
 
 /*
  *CC1101 Transfer Details (from the datasheet)
@@ -219,9 +223,54 @@ uint8_t config[38][2] = {
     { _SYNC0, 0xAB   },
 };
 
+uint8_t readingdata[64];
+unsigned char ackcount[4];
+order_t inputorders[256][4];
+
+//default read for 7 byte default transfer byte size
+//returns 0 if valid data
+//        1 if invalid data
+int rxd(int fd) {
+    changemode(fd, 0); //put in idle
+    uint8_t tx[8] = {0,0,0,0,0,0,0,0};
+    tx[0] = RX_BURST;
+    struct spi_ioc_transfer fr = {
+        .tx_buf = (unsigned long) tx,
+        .rx_buf = (unsigned long) readingdata,
+        .len = len+1,
+        .delay_usecs = delay,
+        .speed_hz = speed,
+        .bits_per_word = bits,
+    };
+    ret = ioctl(fd, SPI_IOC_MESSAGE(1), &fr);
+    if (ret < 1) pabort("can't send spi message");
+    //check status byte
+    uint8_t check = readingdata[0] & 0x70;
+    if (check != 0x30) {
+        printf("ERROR: read status != RX mode!\r\n");
+        return 1;
+    } else {
+        //check that ackcount[player id] == msg_id
+        if (ackcount[readingdata[1]] == readingdata[2]) {
+            printf("Found valid data: msg_id (0x%x) == ackcount[%i] (0x%x)!\r\n",readingdata[2],readingdata[1],ackcount[readingdata[1]]);
+            //Send back acknowledge
+            changemode(fd, 0);
+            tx[0] = TX_BURST;
+            tx[1] = 0xED;
+            tx[2] = 0xAC;
+            send(fd, 3, tx);
+            printf("Sent acknowledge!\r\n");
+            return 0;
+        } else if (ackcount[readingdata[1]] > msg_id) { //already received this message -- ignore
+            printf("ERROR: ackcount > msg_id. ignoring message as I've already recieved.\r\n");
+            return 1;
+        }
+    }
+    return 1;
+}
+
 //Reads len bytes off of the RX fifo
 //passes back array with data starting at index = 1
-uint8_t readingdata[64];
 void rxdata(int fd, int len) {
     changemode(fd,0); //put in idle
     printf("Called rxdata, reading %i bytes off fifo... \r\n",len);
@@ -246,6 +295,116 @@ void rxdata(int fd, int len) {
     printf("RX Data: ");
     for (i = 1;i < len;i++) printf("0x%x ",readingdata[i]);
     printf("\r\n");
+    //check status byte
+    uint8_t check = readingdata[0] & 0x70;
+    if (readingdata[0] != 0x30) printf("WARNING: READ STATUS RETURN GAVE NON-RX VALUE: 0x%x!!!!\r\n",readingdata[0]);
+}
+
+//waits for acknowledge(s) from controller(s)
+//type 0 - 3 = controller to wait for
+//type 4 = wait for ack from all controllers
+//return - 0 if successfully got acknowledge(s)
+//         1 - timed out! retry comm and call again
+int ackwait(int fd, int type) {
+    time_t tstart = time(NULL);
+    int i;
+    int count = 0;
+    int check[4] = {0,0,0,0};
+    uint8_t tx[3];
+    switch(type) {
+        case 0:
+        case 1:
+        case 2:
+        case 3: 
+            while (count < 1) {
+                rxdata(fd, 2); //read 2 byte acknowledge
+                if ((readingdata[2] == 0xAC)&&(readingdata[1] == type)) {
+                    printf("Found controller %i acknowledge!\r\n",type);
+                    count++;
+                } else {
+                    printf("ERROR: found invalid ack, reading again!\r\n");
+                    //check timeout
+                    int telapsed = difftime(time(NULL), tstart);
+                    if (telapsed > TIMEOUT) { //timeout 
+                        printf("COM ERROR: Timed out after %i seconds waiting for acks!\r\n",TIMEOUT);
+                        return 1;
+                    }
+                }
+            }
+            printf("Continuing...\r\n");
+            ackcount[type]++;//Increment acknowledge count
+            break;
+        case 4:
+            printf("Waiting for acknowledge from all 4 controllers...\r\n");
+            while (count < 4) {
+                rxdata(fd, 2); //read 2 byte acknowledge
+                if (readingdata[2] == 0xAC) { //found valid acknowledge
+                    if ((readingdata[1] < 0)||(readingdata[1] > 3)) {
+                        printf("ERROR: Invalid source address received!!!\r\n");
+                        exit();
+                    } else {
+                        printf("         Found valid acknowledge from id %i!\r\n",readingdata[1]);
+                        check[readingdata[1]] = 1;
+                    }
+                }
+                //count acknowledges 
+                count = 0;
+                for (i = 0;i < 4;i++) count += check[i]; 
+                //check for timeout
+                int telapsed = difftime(time(NULL), tstart);
+                if (telapsed > TIMEOUT) { //timeout 
+                    printf("COM ERROR: Timed out after %i seconds waiting for acks!\r\n",TIMEOUT);
+                    return 1;
+                }
+            }
+            printf("Found all 4 acknowledges!!! Continuing...\r\n");
+            //Increment acknowledge count
+            for (i = 0;i < 4;i++) ackcount[i]++;
+            break;
+        default:
+            printf("Invalid ackwait call!\r\n");
+            return 1;
+            break;
+    }
+    return 0;
+}
+
+//transfers data via radio
+//default is 7 byte transfer burst (Not including header for spi)
+//acktype is needed acknowledge address (4 for all)
+//returns 0 on success, 1 otherwise
+void txdata(int fd, int acktype, uint8_t *in) {
+    int i, ret;
+    int ackd = 0;
+    uint8_t tx[8]; 
+    uint8_t rx[8]; 
+    tx[0] = TX_BURST;
+    for (i = 1;i < 8;i++) tx[i] = in[i];
+    while (ackd == 0) {
+        struct spi_ioc_transfer fr = {
+            .tx_buf = (unsigned long) tx,
+            .rx_buf = (unsigned long) rx,
+            .len = 8,
+            .delay_usecs = delay,
+            .speed_hz = speed,
+            .bits_per_word = bits,
+        };
+        ret = ioctl(fd, SPI_IOC_MESSAGE(1), &fr);
+        if (ret < 1) pabort("can't send spi message");
+        //check that status bit = tx mode
+        uint8_t check = rx[0] & 0x70;
+        if (check != 0x20) {
+            printf("ERROR: CC1101 not in tx mode!\r\n");
+            //TODO may consider sending back to idle here
+        } else if (ackwait(fd, acktype) == 1) {
+            printf("ERROR: Failed to get acknowledges!\r\n");
+        } else {
+            printf("SUCCESS! Data: ");
+            for (i = 1;i < 8;i++) printf("0x%i ",tx[i]);
+            printf(" sent and acknowledged.\r\n");
+            ackd = 1;
+        }
+    }
 }
 
 //Sends data over spi
@@ -274,11 +433,6 @@ uint8_t send(int fd, int len, uint8_t *in) {
     };
     ret = ioctl(fd, SPI_IOC_MESSAGE(1), &fr);
     if (ret < 1) pabort("can't send spi message");
-    if (len >= 1) {
-        printf("RX: ");
-        for(i = 0;i < len;i++) printf("0x%x ",rx[i]);
-        printf("\r\n");
-    }
     return rx[len-1];  
 } 
 
@@ -294,6 +448,7 @@ static void configure(int fd) {
     sleep(1);
     printf("Configuring... ");
     int i;
+    for (i = 0;i < 4;i++) ackcount[i] = 0; //set all ack counts to zero 
     for (i = 0;i < 38;i++) {
         printf("%i ",i);
         tx[0] = config[i][0]; 
@@ -426,6 +581,7 @@ void changemode(int fd, int mode) {
     printf("found correct state! continuing...\r\n");
 }
 
+
 int runspi(void *g) {
     printf("Called runspi!\r\n"); 
     region_t *gd = (region_t*)g;
@@ -445,60 +601,100 @@ int runspi(void *g) {
         changemode(fd,1); //put in tx mode                                                                
 
         //1. Send Phase Type (Key & Data) 2 bytes
+        printf("1. Sending phase type:\r\n");
         tx[0] = TX_BURST;
-        tx[1] = 0x88; //key for phase  
-        tx[2] = 0x00; //Phase type, 0 - order writing, 1 - locked, 2 - retreat/disband, 3 - gain/lose units
-        send(fd, 3, tx);
+        tx[1] = 0xED; //sender addr
+        tx[2] = ackcount[0]; 
+        tx[3] = 0x88; //phase type key
+        tx[4] = 0x00; //Phase type, 0 - order writing, 1 - locked, 2 - retreat/disband, 3 - gain/lose units
+        tx[5] = 0x00; //N/A
+        tx[6] = 0x00;
+        tx[7] = 0x00;
+        txdata(fd, 4, tx);
 
         //2. Send region data 0 -> 47 (Owner & Unit_type) 2 bytes
         int i;
-        printf("Sending region data...\r\n");
+        printf("2. Sending region data:\r\n");
         for (i = 0;i < 48;i++) {
-            tx[1] = (uint8_t)gd[i].player;
-            tx[2] = (uint8_t)gd[i].occupy_type;
-            printf("%i: player - %i, type - %i\r\n",i,tx[1],tx[2]);
+            tx[1] = 0xED;
+            tx[2] = ackcount[0]; //TODO using controller 0 as master -- maybe take mean here or diff?
+            tx[3] = (uint8_t)gd[i].player;
+            tx[4] = (uint8_t)gd[i].occupy_type;
+            tx[5] = 0x00; //N/A
+            tx[6] = 0x00;
+            tx[7] = 0x00;
+            printf("%i: player - %i, type - %i\r\n",i,tx[3],tx[4]);
             changemode(fd,1); //put in tx mode                                                                
-            send(fd, 3, tx);
+            txdata(fd, 4, tx);
             sleep(1); //TODO hopefully get to remove
         } 
 
         //3. Wait for turn_up || btn_press --> send 0xBF ack
         sleep(10); //TODO need to replace with game state wait
-        tx[0] = TX_BYTE;
-        tx[1] = 0xBF;
+        tx[1] = 0xED;
+        tx[2] = ackcount[0]; //TODO using controller 0 as master -- maybe take mean here or diff?
+        tx[3] = 0xBF; //round end signal
+        tx[4] = 0x00;
+        tx[5] = 0x00; //N/A
+        tx[6] = 0x00;
+        tx[7] = 0x00;
         changemode(fd,1); //put in tx mode                                                                
-        send(fd, 2, tx);
+        txdata(fd, 4, tx);
 
         //4. Start Polling to get orders from controllers
         for (i = 0;i < 3;i++) {
             //Flush RX Buffer before requesting transfer
             changemode(fd,0);
-            //Send out player ID
-            tx[0] = TX_BYTE; 
-            tx[1] = (uint8_t)i;
-            changemode(fd,1); //put in tx mode                                                                
+            tx[0] = TX_BYTE;
+            tx[1] = _SFTX;
             send(fd, 2, tx);
 
+            //Send out player ID
+            tx[1] = 0xED;
+            tx[2] = ackcount[i]; //splits to send seperate acknowledge count
+            tx[3] = (uint8_t) i; //player id
+            tx[4] = 0x00;
+            tx[5] = 0x00; 
+            tx[6] = 0x00;
+            tx[7] = 0x00;
+            changemode(fd,1); //put in tx mode                                
+            txdata(fd, i, tx);
+
             //get orders until seen 0xDE (done char) 
-            tx[0] = _SFRX; 
             changemode(fd,0);
             uint8_t done = 0x00;
-            printf("Starting wait loop for controller order data:");
+            printf("Starting wait loop for controller %i order data:",i);
+            int count = 0;
             while (done != 0xDE) {
                 printf("Waiting for packet... ");
-                rxdata(fd, 5); //read 5 bytes from fifo: ordertype, unittype, c, tc, sc
-                //check for complete byte
-                if (readingdata[1] == 0xDE) {
-                    printf("Got complete byte 0xDE!! Continuing\r\n");
-                    done = 0xDE;
+                int readcheck = rxd(fd);
+                if (readcheck == 0) { //valid read 
+                    //check for done byte
+                    if (readingdata[3] == 0xDE) { //found done byte
+                        printf("Seen done byte 0xDE!!\r\n");
+                        done = 0xDE;
+                    } else {
+                        //save off order data
+                        printf("Saving order #%i!\r\n",count);
+                        inputorders[count][i].country = readingdata[3];
+                        inputorders[count][i].order = readingdata[4];
+                        inputorders[count][i].type = readingdata[5];
+                        inputorders[count][i].tcountry = readingdata[6];
+                        inputorders[count][i].scountry = readingdata[7];
+                        count++;
+                    }
                 } else {
-                    //TODO save off read data
-                    printf("Saving off Data -- TODO\r\n");
+                    printf("Got invalid rxd response, ignore read and retrying\r\n");
                 }
             }
             sleep(1);
         }
+
+        //clear acknowledge counts
+        for (i = 0;i < 4;i++) ackcount[i] = 0;
+
         printf("Done getting order data... launching arbirator\r\n");
+        //TODO add call to arbitrator passing it inputorders[][]
         sleep(5);
         printf("End of Transmission!!!\r\n");
     }
