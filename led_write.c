@@ -155,13 +155,13 @@ void writeout() {
 
 void examplegame(){
 	initialize();
-	int i, j;
+	int i;
 	printf("Writing to leds:\r\n");
 	for(i = 0;i < 306;i++) {
 		printf("%i: ",i);
 		writeled(1, i);	
 		writeout();
-		printf("\r\n\r\n ",i);
+		printf("\r\n\r\n ");
 		sleep(1);
 	}
 	sleep(5);

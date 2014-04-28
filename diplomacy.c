@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <unistd.h>
 #include "order.h"
 #include "region.h"
 #include "include.h"
@@ -85,6 +86,7 @@ int waitloop(int waittime) {
          //printf("timer at %i seconds.\r\n",t);
     }
     printf("timer complete after %i seconds.\r\n",t);
+return 0;
 }
 
 //for now mode - 0 equals random and 1 - user
@@ -97,11 +99,13 @@ int getorders(int mode, int seed, int numorders, char file[]) {
 }
 
 //polling during waits for pause GPIO input
-int main(int argc, char *argv[]) {
+int main() {
+	//testfunc();
 	//TODO START OF THE TEST ZONE TODO 
 	printf("Launching example game\r\n");
 	examplegame();
-    //runspi((void*)g); //TODO testing loop for SPI
+    	configurespi(); //setup cc1101 
+    	runspi(); //TODO testing loop for SPI
 	while(1) {
 		sleep(5);
 	}
@@ -120,7 +124,6 @@ int main(int argc, char *argv[]) {
         default :
             break;
     }
-    configure(); //setup cc1101 
 
     while (gameRunning) {
         printgame(); // debug print of game status

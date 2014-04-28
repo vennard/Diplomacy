@@ -42,6 +42,7 @@ int uartsetup() {
     tcflush(uart0_fs, TCIFLUSH);
     tcsetattr(uart0_fs, TCSANOW, &options);
 */
+return 0;
 }
 //called during game wait periods checking for submitted orders
 int checkfororders(){
@@ -93,4 +94,5 @@ int checkfororders(){
     close(uart0_fs);
      */
 
+return 0;
 }

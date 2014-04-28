@@ -1,26 +1,18 @@
-HEADERS = order.h region.h include.h
-OBJECTS = arbitrator.c testorders.c startgame.c resources.c diplomacy.c rxorders.c  led_write.c spi_comm.c
-SAFE= -Wall -Werror
-
-default: diplomacy
-
-spi-testing: $(OBJECTS)
-	gcc $(OBJECTS) -o $@ 
-
-arbitrator: $(OBJECTS)
-	gcc $(OBJECTS) -o $@ 
-
-testorders: $(OBJECTS)
-	gcc $(OBJECTS) -o $@ 
-
-startgame: $(OBJECTS)
-	gcc $(OBJECTS) -o $@ 
-
-resources: $(OBJECTS)
-	gcc $(OBJECTS) -o $@ 
+OBJECTS= $(patsubst %.c,%.o, $(wildcard *.c))
+#CFLAGS= -Wall -Wextra -Werror
 
 diplomacy: $(OBJECTS)
-	gcc $(OBJECTS) -o $@ 
+	$(CC) $(CFLAGS) $(OBJECTS) -o diplomacy
+
+%.o: %.c
+	$(CC) -c $(CFLAGS) $*.c -o $*.o
+	$(CC) -MM $(CFLAGS) $*.c > $*.d
+	@mv -f $*.d  $*.d.tmp
+	@sed -e 's|.*:|$*.o:|' < $*.d.tmp
+	@sed -e 's/.*://' -e 's/\\$$//' < $*.d.tmp | fmt -1 | \
+	 sed -e 's/^ *//' -e 's/$$/:/' >> $*.d
+	@rm -f $*.d.tmp
+
 
 clean:
 	-rm -f diplomacy testorders startgame *.o 

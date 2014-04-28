@@ -73,6 +73,7 @@ int printgame() {
         }
 
     }
+return 0;
 }
 
 //checks if supply phase is needed, and what countrys need to remove units
@@ -389,7 +390,6 @@ int validate(int type) {
         int c = to.country;
         int tc = to.tcountry;
         int sc = to.scountry;
-        int check = 1;
         switch(to.order) {
             case 0 : //hold
                 d = g[c].dS;
@@ -548,7 +548,7 @@ int validate(int type) {
 //returns -1 if it finds invalid order, else 0
 int evaluate(){
     printf("Evaluating valid orders... ");
-    int i, j;
+    int i;
     clean(); //clean up all stats before evaluating
     for (i = 0;i < numO;i++) {
         if (o[i].valid == 1) {
@@ -615,6 +615,7 @@ int insertholds(){
         } 
     }
     printf(" and done!\r\n");
+return 0;
 }
 
 //find and remove duplicate orders -- last valid order in wins
