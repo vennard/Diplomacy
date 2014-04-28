@@ -171,7 +171,6 @@ static uint8_t mode;
 static uint8_t bits = 8;
 //static uint32_t speed = 500000;
 static uint32_t speed = 1000000;
-//static uint32_t speed = 250000;
 static uint16_t delay = 10;
 static void pabort(const char *s) {
   perror(s);
@@ -205,7 +204,7 @@ uint8_t config[38][2] = {
     { _AGCCTRL2, 0x43 },
     { _AGCCTRL1, 0x40 },
     { _FSCAL3, 0x91  }, 
-    { _FSCAL2, 0xE9  }, 
+    { _FSCAL2, 0x29  }, 
     { _FSCAL1, 0x2A  }, 
     { _FSCAL0, 0x00  }, 
     { _FSCAL0, 0x1F  }, 
@@ -221,8 +220,8 @@ uint8_t config[38][2] = {
     { _ADDR, 0x00    },
     { _PKTLEN, 0x05  },
     { _WORCTRL, 0xFB },
-    { _SYNC1, 0xCD   },
-    { _SYNC0, 0xAB   },
+    { _SYNC1, 0xDD   },
+    { _SYNC0, 0xDD   },
 };
 
 uint8_t readingdata[64];
@@ -302,7 +301,7 @@ void rxdata(int len) {
     ret = ioctl(fd, SPI_IOC_MESSAGE(1), &fr);
     if (ret < 1) pabort("can't send spi message");
     printf("RX: ");
-    for (i = 1;i < len;i++) printf("0x%x ",readingdata[i]);
+    for (i = 0;i < len+1;i++) printf("0x%x ",readingdata[i]);
     printf("\r\n");
     //check status byte
     uint8_t check = readingdata[0] & 0x70;
@@ -325,7 +324,12 @@ int ackwait(int type) {
         case 2:
         case 3: 
             while (count < 1) {
-                rxdata(2); //read 2 byte acknowledge
+		char buf[1];
+		scanf("%s",buf);
+		uint8_t ss = _SFRX;
+		send(1,&ss);
+		scanf("%s",buf);
+                rxdata(7); //read 2 byte acknowledge
                 if ((readingdata[2] == 0xAC)&&(readingdata[1] == type)) {
                     printf("Found controller %i acknowledge!\r\n",type);
                     count++;
@@ -335,7 +339,7 @@ int ackwait(int type) {
                     int telapsed = difftime(time(NULL), tstart);
                     if (telapsed > TIMEOUT) { //timeout 
                         printf("COM ERROR: Timed out after %i seconds waiting for acks!\r\n",TIMEOUT);
-                        return 1;
+                        //return 1; //TODO need this
                     }
                 }
             }
@@ -401,6 +405,8 @@ void txdata(int acktype, uint8_t *in) {
         ret = ioctl(fd, SPI_IOC_MESSAGE(1), &fr);
         if (ret < 1) pabort("can't send spi message");
         //check that status bit = tx mode
+	char buf[1];
+	scanf("%s",buf);
         uint8_t check = rx[0] & 0x70;
         if (check != 0x20) {
             printf("ERROR: CC1101 not in tx mode!\r\n");
@@ -421,11 +427,10 @@ void txdata(int acktype, uint8_t *in) {
 //returns last rx byte received from cc1101
 uint8_t send(int len, uint8_t *in) { 
     int i, ret;
-    uint8_t tx[len]; 
     uint8_t rx[len];
     if (len >= 1){
         printf("Sending %i bytes: ",len);
-        for (i = 0;i < len;i++) printf("0x%x ",tx[i+1]);
+        for (i = 0;i < len;i++) printf("0x%x ",in[i]);
         printf("---------");
     } else {
         printf("Send invalid - requested 0 bytes!\r\n");
@@ -466,13 +471,12 @@ void configurespi() {
         tx[0] = config[i][0]; 
         tx[1] = config[i][1];
         send(2, tx);
-        sleep(1);
-        printf(" sent 0x%x 0x%x",tx[0],tx[1]);
+	usleep(1);
         check = config[i][0] | 0x80;
         tx[0] = check;
         tx[1] = 0x00;
         check = send(2, tx);
-        printf("... got 0x%x",check);
+        printf("    ... got 0x%x",check);
         if (check != config[i][1]) {
             printf(" validation FAILED! retrying...\r\n"); 
             i--;
@@ -481,6 +485,13 @@ void configurespi() {
         }
         sleep(1);
     }
+    changemode(0); //put in idle
+    tx[0] = _SFTX;
+    send(1,tx);
+    printf("Cleared TX Buffer... ");
+    tx[0] = _SFRX;
+    send(1,tx);
+    printf("Cleared RX Buffer!\r\n");
     printf("------------------Completed CC1101 configuration successfully!-----------------------\r\n\r\n");
 }
 
@@ -641,12 +652,15 @@ int rx_orders_start(int roundtype) {
 void runspi(void) {
     printf("Called runspi!\r\n"); 
     region_t *gd = (region_t*)g;
-    //configure(fd);
+    configurespi();
 
     //Transmit test game data
     uint8_t tx[64];
     uint8_t rx[64];
     while(1) {
+        changemode(0); //put in idle
+	tx[0] = _SFRX;
+	send(1,tx);
         printf("\r\nStart of Transmission!!!\r\n");
         changemode(1); //put in tx mode                                                                
 
@@ -660,7 +674,11 @@ void runspi(void) {
         tx[5] = 0x00; //N/A
         tx[6] = 0x00;
         tx[7] = 0x00;
-        txdata(4, tx);
+        //txdata(4, tx); //TODO needs this
+        txdata(1, tx);
+	
+	char buf[1];
+	scanf("%s",buf);
 
         //2. Send region data 0 -> 47 (Owner & Unit_type) 2 bytes
         int i;
