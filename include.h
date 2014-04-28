@@ -14,9 +14,19 @@ extern int getTestOrders(int seed,int numOrders, char f[]);
 extern int firstvalidate(void);
 extern int secondvalidate(void);
 
+//calls for spi communication
 extern int runspi(void*);
 extern void startspi(void);
 
+//calls for led control
 extern void examplegame(void);
+extern void writeled(int val, int lednum);
+extern void writeout(void);
+
+//calls for timer control
+extern void settmr(int min);
+extern void starttmr(void);
+extern int checktmr(void);
+
 
 #endif

@@ -29,11 +29,38 @@
 
 static uint8_t leds[39]; //last 6 bits unused 306 / 8 = 38.25
 int write_reg(int fd, int writebuf);
+uint8_t read_reg(int fd); 
+
+void settmr(int min) {
+    printf("Set timer for %i minutes.\r\n",min);
+    int fd = open(TMRMIN_FILE, O_WRONLY);
+    if (fd < 0) perror("Failed to open tmrmin reg\n");
+    write_reg(fd, min);
+    close(fd);
+}
+
+void starttmr() {
+    printf("Started timer...\r\n");
+    int fd = open(TMRSTART_FILE, O_WRONLY);
+    if (fd < 0) perror("Failed to open tmrstart reg\n");
+    write_reg(fd, 0x1);
+    close(fd);
+}
+
+//returns 1 if timer is done, 0 otherwise
+int checktmr() {
+    int fd = open(TMRUP_FILE, O_WRONLY);
+    if (fd < 0) perror("Failed to open tmrup reg\n");
+    uint8_t temp = read_reg(fd);
+    temp = temp & 0x01; //TODO may have to use tmrmask_file!
+    return temp; 
+}
+
 
 //populate led data with zeros
 void initialize(){
     int fd = open(DATASIZE_FILE, O_WRONLY);
-    if (fd < 0) perror("failed to write to datasize_file\n");
+    if (fd < 0) perror("failed to open datasize_file\n");
     write_reg(fd, 0x08);
     close(fd);
     int i;
@@ -81,6 +108,8 @@ uint8_t read_reg(int fd) {
         return *buf;
     }
 }
+
+
 
 //waits until sees ready in ready_file
 void readywait() {
