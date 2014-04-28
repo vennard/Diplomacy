@@ -1,5 +1,5 @@
 HEADERS = order.h region.h include.h
-OBJECTS = arbitrator.c testorders.c startgame.c resources.c diplomacy.c rxorders.c  led_write.c
+OBJECTS = arbitrator.c testorders.c startgame.c resources.c diplomacy.c rxorders.c  led_write.c spi_comm.c
 SAFE= -Wall -Werror
 
 default: diplomacy

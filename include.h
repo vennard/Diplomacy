@@ -15,8 +15,10 @@ extern int firstvalidate(void);
 extern int secondvalidate(void);
 
 //calls for spi communication
-extern int runspi(void*);
-extern void startspi(void);
+extern void runspi(void*);
+extern void tx_phase_start(int phasetype, void* ptr);
+extern void* rx_orders_start(int roundtype);
+extern void configure(void);
 
 //calls for led control
 extern void examplegame(void);

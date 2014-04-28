@@ -17,10 +17,6 @@ order_t o[MAX_ORDERS];
 int validOrders = 0;
 int numO = 0;
 
-void startspi() {
-    //runspi((void*)g);
-}
-
 int loadgamedata(char f[]) {
    int fd = open(f, O_RDONLY);
    if (fd < 0) {

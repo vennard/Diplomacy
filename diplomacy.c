@@ -63,6 +63,16 @@ int gamewon() {
     return 0;
 }
 
+//waits for timer done or btn press 
+//TODO add btn press
+void timerwait() {
+    printf("start timer... ");
+    settmr(D_PHASE);
+    starttmr();  
+    while (checktmr() == 0) sleep(1);
+    printf("done!\r\n");
+}
+
 int waitloop(int waittime) {
     printf("Starting timer now for %i seconds...\r\n",waittime);
     int t = 0;
@@ -88,16 +98,17 @@ int getorders(int mode, int seed, int numorders, char file[]) {
 
 //polling during waits for pause GPIO input
 int main(int argc, char *argv[]) {
-	//TODO remove led testing
+	//TODO START OF THE TEST ZONE TODO 
 	printf("Launching example game\r\n");
 	examplegame();
+    //runspi((void*)g); //TODO testing loop for SPI
 	while(1) {
 		sleep(5);
 	}
+    //TODO END OF TEST ZONE TODO
     printf("Welcome to Diplomacy!\r\n");
     time(&timestart); //get start time
     printf("Current time - %s\r\n",asctime(localtime(&timestart)));
-    //difftime(time1, time2); //returns difference in seconds
     //Wait for Menu Selection -- load game / new game / clear game / pause menu
     switch (menu()) {
         case 0 : //starting new game
@@ -109,23 +120,28 @@ int main(int argc, char *argv[]) {
         default :
             break;
     }
-    //startspi(); //TODO testing loop for SPI
+    configure(); //setup cc1101 
 
     while (gameRunning) {
-        // debug print of game status
-        printgame(); 
+        printgame(); // debug print of game status
         // ---- Start of Spring ----
         printf("--------- Start of year %i ----------\r\n\r\n",year);
         printf("--------- Spring %i --------- \r\n",year);
+        tx_phase_start(0, g);
         waitloop(D_PHASE); //Start of Order & Diplomacy phase
+        //timerwait();
+        //numO = rx_orders_start(0);
         numO = getorders(customorders,testseed,T_ORDERS,"/tmp/torders");
         testseed+=5;
         arbitor();
         //starting retreat phase
         if (Rneeded) {
+            tx_phase_start(1, g);
             Rneeded = 0;
             printf("Starting retreat phase for spring %i.\r\n",year);
             waitloop(R_PHASE);
+            //timerwait();
+            //numO = rx_orders_start(1);
             numO = getorders(customorders,testseed,T_ORDERS,"/tmp/torders");
             testseed+=5;
             arbitor();
@@ -134,15 +150,21 @@ int main(int argc, char *argv[]) {
         }
         // ---- Start of Fall ----
         printf("\r\n\r\n--------- Fall %i --------- \r\n",year);
+        tx_phase_start(0, g);
         waitloop(D_PHASE);
+        //timerwait();
+            //numO = rx_orders_start(1);
         numO = getorders(customorders,testseed,T_ORDERS,"/tmp/torders");
         testseed+=5;
         arbitor();
         //starting retreat phase
         if (Rneeded) {
+            tx_phase_start(1, g);
             Rneeded = 0;
             printf("Starting retreat phase for fall %i.\r\n",year);
             waitloop(R_PHASE);
+            //timerwait();
+            //numO = rx_orders_start(1);
             numO = getorders(customorders,testseed,T_ORDERS,"/tmp/torders");
             testseed++;
             arbitor();
@@ -150,11 +172,14 @@ int main(int argc, char *argv[]) {
         } else {
             printf("Skipping retreat phase for fall %i.\r\n",year);
         }
-        supplycheck();
+        Sneeded = supplycheck();
         if (Sneeded) {
+            tx_phase_start(2, g);
             Sneeded = 0;
             printf("Starting supply phase for fall %i.\r\n",year);
             waitloop(S_PHASE);
+            //timerwait();
+            //numO = rx_orders_start(2);
             numO = getorders(customorders,testseed,T_ORDERS,"/tmp/torders");
             testseed++;
             //arbitor();
@@ -162,7 +187,6 @@ int main(int argc, char *argv[]) {
         } else {
             printf("skipping supply phase for fall %i.\r\n",year);
         }
-
         printf("\r\nChecking winning conditions... ");
         if (gamewon()) {
             printf("The Game is over!!!!\r\n");

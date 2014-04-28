@@ -109,8 +109,6 @@ uint8_t read_reg(int fd) {
     }
 }
 
-
-
 //waits until sees ready in ready_file
 void readywait() {
     printf("Waiting to write until system is ready... ");
