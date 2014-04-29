@@ -125,6 +125,13 @@ void writeout() {
     printf(" done!\r\n");
 }
 
+//type is 0 for army, 1 for fleet, 2 for owner, 3 for supply
+//returns 0 on success, 1 on failure
+int writeregion(int player, int region, int type) {
+    //I wonder if there is math I can do here
+    return 0;
+}
+
 void examplegame(){
 	initialize();
 	int i;
