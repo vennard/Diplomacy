@@ -656,6 +656,130 @@ int rx_orders_start(int roundtype) {
     return 0;
 }
 
+void demo(void) {
+    int country;
+    printf("starting demo...\r\n");
+    uint8_t tx[64];
+    uint8_t rx[64];
+
+    //1. prompt for country
+    printf("Enter country you would like to control:");
+    char buf[10];
+    int good = 0;
+    while(!good) {
+        scanf("%s",buf);
+        country = atoi(buf);
+        if ((country < 0)||(country > 47)) { 
+            printf("Invalid entry! Please try again.\r\n");
+        } else {
+            printf("Ok I'll see what I can do with country %i!\r\n",country);
+            good = 1;
+        }
+    }
+    printf("Sending selected data to controller!\r\n");
+    configurespi();
+
+    //2. Send Phase Type (Key & Data) 2 bytes
+    printf("2. Sending phase type:\r\n");
+    tx[0] = TX_BURST;
+    tx[1] = 0xED; //sender addr
+    tx[2] = ackcount[0]; 
+    tx[3] = 0x88; //phase type key
+    tx[4] = 0x00; //Phase type, 0 - order writing, 1 - locked, 2 - retreat/disband, 3 - gain/lose units
+    tx[5] = 0x00; //N/A
+    tx[6] = 0x00;
+    tx[7] = 0x00;
+    txdata(0, tx);
+
+    //3. Send out country data
+    printf("3. Sending phase type:\r\n");
+    tx[0] = TX_BURST;
+    tx[1] = 0xED; //sender addr
+    tx[2] = ackcount[0]; 
+    tx[3] = (uint8_t) g[country].player;
+    tx[4] = (uint8_t) g[country].occupy_type;
+    tx[5] = (uint8_t) country; 
+    tx[6] = 0x00;
+    tx[7] = 0x00;
+    txdata(0, tx);
+
+    //4. wait 1 minute turn period
+    printf("Starting wait period of 1 min...");
+    settmr(1);
+    starttmr();
+    while (checktmr() == 0); //spin on timer status
+    printf("Timer done!\r\n");
+
+    //5. Send lock to controller
+    printf("Sending lock signal to controller!\r\n");
+    tx[1] = 0xED;
+    tx[2] = ackcount[0]; //TODO using controller 0 as master -- maybe take mean here or diff?
+    tx[3] = 0xBF; //round end signal
+    tx[4] = 0x00;
+    tx[5] = 0x00; //N/A
+    tx[6] = 0x00;
+    tx[7] = 0x00;
+    txdata(0, tx);
+
+    //6. Zedboard polls controller
+    printf("Sending polling signal to controller!\r\n");
+    tx[1] = 0xED;
+    tx[2] = ackcount[0]; //splits to send seperate acknowledge count
+    tx[3] = 0; //player id
+    tx[4] = 0x00;
+    tx[5] = 0x00; 
+    tx[6] = 0x00;
+    tx[7] = 0x00;
+    txdata(0, tx);
+
+    //7. Controller sends order data back
+    printf("waiting for controller order data... ");
+    int done = 0;
+    order_t no;
+    while (!done) {
+
+        char buf[1];
+        printf("enter to continue");
+        scanf("%s",buf);
+
+        rxdata(7); //puts results in readingdata 1 -> len
+        printf("Status of RX: 0x%x ",readingdata[0]);
+        //check if valid
+        if ((readingdata[1] == 0)&&(readingdata[2] == ackcount[0])) {
+            printf(" found valid order!\r\n");
+            no.player = 0;
+            no.country = readingdata[3]; 
+            no.order = readingdata[4]; 
+            no.type = readingdata[5]; 
+            no.tcountry = readingdata[6]; 
+            no.scountry = readingdata[7]; 
+            printf("Order was: player %x, country %x, order %x, unit type %x, type %x, tcountry %x, scountry %x!\r\n",no.player,no.country,no.order,no.type,no.tcountry,no.scountry);
+            done = 1;
+            printf("Sending ack!\r\n");
+            tx[0] = TX_BURST;
+            tx[1] = 0xED;
+            tx[2] = 0xAC;
+            tx[3] = ackcount[0];
+            txdata(0, tx);
+        } else if (readingdata[1] == 0) {
+            printf(" found valid player id, not accepting but still sending ack\r\n");
+            printf("Sending ack!\r\n");
+            tx[0] = TX_BURST;
+            tx[1] = 0xED;
+            tx[2] = 0xAC;
+            tx[3] = ackcount[0];
+            txdata(0, tx);
+        } else {
+            printf(" found invalid order -- ERROR!\r\n");
+        }
+    }
+
+    //8. Send order data to arbitrator
+    o[0] = no; //save off order
+    numO = 1;
+    arbitor();
+}
+
 void runspi(void) {
     printf("Called runspi!\r\n"); 
     configurespi();
@@ -668,7 +792,6 @@ void runspi(void) {
 	tx[0] = _SFRX;
 	send(1,tx);
         printf("\r\nStart of Transmission!!!\r\n");
-        changemode(1); //put in tx mode                                                                
 
         //1. Send Phase Type (Key & Data) 2 bytes
         printf("1. Sending phase type:\r\n");
@@ -681,6 +804,7 @@ void runspi(void) {
         tx[6] = 0x00;
         tx[7] = 0x00;
         //txdata(4, tx); //TODO needs this
+        changemode(1); //put in tx mode                                                                
         txdata(0, tx);
 	
 	char buf[1];
@@ -726,7 +850,7 @@ void runspi(void) {
             changemode(0);
             tx[0] = TX_BYTE;
             tx[1] = _SFTX;
-            send(2, tx);
+            send(2, tx); //UM WHAAAAT TODO fix this shit
 
             //Send out player ID
             tx[1] = 0xED;

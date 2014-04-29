@@ -28,41 +28,41 @@
 #define TMRUP_FILE "/sys/kernel/ece453_digidiplo/tmrtimeup"
 
 static uint8_t leds[39]; //last 6 bits unused 306 / 8 = 38.25
-int write_reg(int fd, int writebuf);
 uint8_t read_reg(int fd); 
 
+int write_reg(const char* file, int val) {
+    FILE *fp;
+    fp = fopen(file, "w");
+    if (fp == NULL) perror("failed to open file");
+    fprintf(fp,"%x",val);
+    printf("wrote %x to %s!\r\n",val,file);
+    fclose(fp);
+}
+
+
 void settmr(int min) {
-    printf("Set timer for %i minutes.\r\n",min);
-    int fd = open(TMRMIN_FILE, O_WRONLY);
-    if (fd < 0) perror("Failed to open tmrmin reg\n");
-    write_reg(fd, min);
-    close(fd);
+    printf("Set timer for %i minutes... ",min);
+    write_reg(TMRMIN_FILE, min);
 }
 
 void starttmr() {
-    printf("Started timer...\r\n");
-    int fd = open(TMRSTART_FILE, O_WRONLY);
-    if (fd < 0) perror("Failed to open tmrstart reg\n");
-    write_reg(fd, 0x1);
-    close(fd);
+    printf("Started timer... ");
+    write_reg(TMRSTART_FILE, 1);
 }
 
 //returns 1 if timer is done, 0 otherwise
-int checktmr() {
-    int fd = open(TMRUP_FILE, O_WRONLY);
-    if (fd < 0) perror("Failed to open tmrup reg\n");
-    uint8_t temp = read_reg(fd);
-    temp = temp & 0x01; //TODO may have to use tmrmask_file!
-    return temp; 
+char checktmr() {
+    FILE *fp;
+    fp = fopen(TMRUP_FILE,"r");
+    if (fp == NULL) perror("failed to open file");
+    char in = fgetc(fp);
+    fclose(fp);
+    return in;
 }
 
 
 //populate led data with zeros
 void initialize(){
-    int fd = open(DATASIZE_FILE, O_WRONLY);
-    if (fd < 0) perror("failed to open datasize_file\n");
-    write_reg(fd, 0x08);
-    close(fd);
     int i;
     for(i = 0;i < 39;i++) leds[i] = 0x00;
     printf("turned all leds off.\r\n");
@@ -86,71 +86,43 @@ void writeled(int val, int lednum) {
     printf("wrote to led %i!\r\n",lednum);
 }
 
-int write_reg(int fd, int writebuf) {
-    int *writeval = NULL;
-    writeval = &writebuf;
-    if(write(fd, writeval, sizeof(int)) == -1) {
-        fprintf(stderr, "error writing to file\n");
-        return -1;
-    } else {
-        printf("Wrote: %i\n",writebuf);
-        return 0;
-    }
-}
-
-uint8_t read_reg(int fd) {
-    char buf[1];
-    if (read(fd, buf, sizeof(buf)-1) < 0) {
-        printf("error reading from register\r\n");
-        return -1;
-    } else {
-        printf(" ----------------------- register read: %i\n",*buf);
-        return *buf;
-    }
-}
-
 //waits until sees ready in ready_file
 void readywait() {
+    FILE *fp;
     printf("Waiting to write until system is ready... ");
-    uint8_t rdy = 0x00;
+    char rdy = 0x00;
     while (rdy != 0x01) {
-        int fd = open(READY_FILE, O_RDONLY);
-        if (fd < 0) perror("failed to read from ready_file\n");
-        rdy = read_reg(fd);
-        printf("register read: %i\n",rdy);
+        fp = fopen(READY_FILE, "r");
+        if (fp == NULL) perror("failed to read from ready_file\n");
+        rdy = fgetc(fp);
+        printf("got: %x\n",rdy);
         rdy = rdy & 0x01;
-        close(fd);
     }
+    fclose(fp);
     printf(" done!\r\n");
 }
 
 //pushes data in leds out to the board
 void writeout() {
-    int fd, i;
+    FILE *fp;
+    int i;
+    //set datasize to 7 (really 8)
+    write_reg(DATASIZE_FILE, 7);
     for (i = 0;i < 39;i++) {
         //write 1 byte at a time
         readywait();
-	printf("writing to data file\r\n");
-        fd = open(DATA_FILE, O_WRONLY);
-        if (fd < 0) perror("failed to write to data_file\n");
-        write_reg(fd, leds[39 - i]);
-        close(fd);
+        printf("write... ");
+        write_reg(DATA_FILE, leds[38-i]);
 
         //shift data over
         readywait();
-	printf("writing to shift file\r\n");
-        fd = open(SHIFT_FILE, O_WRONLY);
-        if (fd < 0) perror("failed to write to shift_file\n");
-        write_reg(fd, 0x01);
-        close(fd);
+        write_reg(SHIFT_FILE, 1);
+	    printf("shift!\r\n");
     }
-    printf("Written all led data to registers... pushing to display now\r\n");
+    printf("Written all led data to registers... pushing to display now");
     readywait();
-    printf("writing to display file\r\n");
-    fd = open(DISPLAY_FILE, O_WRONLY);
-    if (fd < 0) perror("failed to write to display_file\n");
-    write_reg(fd, 0x01);
-    close(fd);
+    write_reg(DISPLAY_FILE, 1);
+    printf(" done!\r\n");
 }
 
 void examplegame(){
@@ -162,7 +134,7 @@ void examplegame(){
 		writeled(1, i);	
 		writeout();
 		printf("\r\n\r\n ");
-		sleep(1);
+		usleep(1000);
 	}
 	sleep(5);
 	printf("Turning off leds:\r\n");
@@ -170,7 +142,7 @@ void examplegame(){
 		writeled(0, i);	
 		writeout();
 		printf("%i ",i);
-		sleep(1);
+		usleep(1000);
 	}
 	printf("Finished examplegame code!\r\n");
 }

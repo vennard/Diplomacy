@@ -125,7 +125,9 @@ int main() {
     }
 
     while (gameRunning) {
-    	runspi(); //TODO testing loop for SPI
+        demo(); 
+        while(1);
+    	//runspi(); //TODO testing loop for SPI
         printgame(); // debug print of game status
         // ---- Start of Spring ----
         printf("--------- Start of year %i ----------\r\n\r\n",year);

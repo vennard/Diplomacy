@@ -8,6 +8,7 @@ extern order_t o[MAX_ORDERS];
 extern int validOrders;
 extern int numO,Sneeded,Rneeded;
 
+int arbitor(void);
 int loadgamedata(char f[]);
 int startnewgame(int num);
 int getTestOrders(int seed,int numOrders, char f[]);
@@ -19,6 +20,7 @@ void runspi(void);
 void tx_phase_start(int phasetype, void* ptr);
 int rx_orders_start(int roundtype);
 void configurespi(void);
+void demo(void);
 
 //calls for led control
 void examplegame(void);
@@ -28,7 +30,7 @@ void writeout(void);
 //calls for timer control
 void settmr(int min);
 void starttmr(void);
-int checktmr(void);
+char checktmr(void);
 
 int makeOrders();
 int printgame();
