@@ -29,13 +29,15 @@
 
 static uint8_t leds[39]; //last 6 bits unused 306 / 8 = 38.25
 uint8_t read_reg(int fd); 
+uint8_t led_reg[300];
+uint8_t test_reg[40];
 
 int write_reg(const char* file, int val) {
     FILE *fp;
     fp = fopen(file, "w");
     if (fp == NULL) perror("failed to open file");
     fprintf(fp,"%x",val);
-    printf("wrote %x to %s!\r\n",val,file);
+    //printf("wrote %x to %s!\r\n",val,file);
     fclose(fp);
 }
 
@@ -60,7 +62,6 @@ char checktmr() {
     return in;
 }
 
-
 //populate led data with zeros
 void initialize(){
     int i;
@@ -70,7 +71,8 @@ void initialize(){
 
 //writes val to lednum
 //total of 0 -> 307 valid locations
-void writeled(int val, int lednum) { 
+void writeled(int lednum, int val) { 
+    led_reg[lednum] = val;	 
     uint8_t temp = 0x01;
     int regnum = lednum / 8;
     int shift = lednum % 8;
@@ -83,7 +85,7 @@ void writeled(int val, int lednum) {
     } else {
         printf("Invalid selection of led!\r\n");
     }
-    printf("wrote to led %i!\r\n",lednum);
+    printf("wrote %i to led %i!\r\n",val,lednum);
 }
 
 //waits until sees ready in ready_file
@@ -91,8 +93,8 @@ void readywait() {
     FILE *fp;
     printf("Waiting to write until system is ready... ");
     char rdy = 0x00;
+    fp = fopen(READY_FILE, "r");
     while (rdy != 0x01) {
-        fp = fopen(READY_FILE, "r");
         if (fp == NULL) perror("failed to read from ready_file\n");
         rdy = fgetc(fp);
         printf("got: %x\n",rdy);
@@ -102,26 +104,23 @@ void readywait() {
     printf(" done!\r\n");
 }
 
+
+
 //pushes data in leds out to the board
 void writeout() {
     FILE *fp;
     int i;
     //set datasize to 7 (really 8)
-    write_reg(DATASIZE_FILE, 7);
-    for (i = 0;i < 39;i++) {
-        //write 1 byte at a time
-        readywait();
-        printf("write... ");
-        write_reg(DATA_FILE, leds[38-i]);
-
-        //shift data over
-        readywait();
-        write_reg(SHIFT_FILE, 1);
-	    printf("shift!\r\n");
-    }
-    printf("Written all led data to registers... pushing to display now");
-    readywait();
-    write_reg(DISPLAY_FILE, 1);
+    write_reg(DATASIZE_FILE, 0);
+    for (i = 0;i < 285;i++) {
+        printf("write to led %i val %i, and shifted val = %i\r\n",i,leds[284-i],leds[284-i] << 31);
+        uint8_t outbyte = 0xF0000000 & (leds[284-i] << 31) || 0x40000000;
+        printf("SHIFTING OUT: 0x%i! vs 0x80000000 = %i\r\n",outbyte,0x80000000);
+        write_reg(DATA_FILE, 0xF0000000);
+        //write_reg(DATA_FILE, outbyte);
+        write_reg(SHIFT_FILE, 0x8);
+    	write_reg(DISPLAY_FILE, 0x1);
+	    usleep(50000);
     printf(" done!\r\n");
 }
 
@@ -132,24 +131,40 @@ int writeregion(int player, int region, int type) {
     return 0;
 }
 
+void clearboard() {
+    printf("trying to clear board!");
+    initialize();
+    writeout();
+}
+
 void examplegame(){
 	initialize();
+	writeled(5,1);
+	writeled(2,1);
+	writeled(3,1);
+	writeled(6,1);
+	writeled(7,1);
+	writeled(9,1);
+	writeout();
+    usleep(100000);
+    clearboard();
 	int i;
 	printf("Writing to leds:\r\n");
 	for(i = 0;i < 306;i++) {
 		printf("%i: ",i);
 		writeled(1, i);	
 		writeout();
-		printf("\r\n\r\n ");
 		usleep(1000);
 	}
+    /*
 	sleep(5);
-	printf("Turning off leds:\r\n");
+	printf("\r\nTurning off leds:\r\n");
 	for(i = 0;i < 306;i++) {
 		writeled(0, i);	
 		writeout();
 		printf("%i ",i);
 		usleep(1000);
 	}
+*/
 	printf("Finished examplegame code!\r\n");
 }

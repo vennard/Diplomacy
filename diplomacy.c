@@ -103,7 +103,7 @@ int main() {
 	//testfunc();
 	//TODO START OF THE TEST ZONE TODO 
 	printf("Launching example game\r\n");
-	//examplegame();
+	examplegame();
     	//configurespi(); //setup cc1101 
 	//while(1) {
 //		sleep(5);
@@ -125,9 +125,9 @@ int main() {
     }
 
     while (gameRunning) {
-        demo(); 
+        //demo(); 
+    	runspi(); //TODO testing loop for SPI
         while(1);
-    	//runspi(); //TODO testing loop for SPI
         printgame(); // debug print of game status
         // ---- Start of Spring ----
         printf("--------- Start of year %i ----------\r\n\r\n",year);
