@@ -27,10 +27,8 @@
 #define TMRMASK_FILE "/sys/kernel/ece453_digidiplo/tmrmaskintr"
 #define TMRUP_FILE "/sys/kernel/ece453_digidiplo/tmrtimeup"
 
-static uint8_t leds[39]; //last 6 bits unused 306 / 8 = 38.25
 uint8_t read_reg(int fd); 
-uint8_t led_reg[300];
-uint8_t test_reg[40];
+int leds[300];
 
 int write_reg(const char* file, int val) {
     FILE *fp;
@@ -65,26 +63,14 @@ char checktmr() {
 //populate led data with zeros
 void initialize(){
     int i;
-    for(i = 0;i < 39;i++) leds[i] = 0x00;
+    for(i = 0;i < 294;i++) leds[i] = 0x00;
     printf("turned all leds off.\r\n");
 }
 
 //writes val to lednum
 //total of 0 -> 307 valid locations
 void writeled(int lednum, int val) { 
-    led_reg[lednum] = val;	 
-    uint8_t temp = 0x01;
-    int regnum = lednum / 8;
-    int shift = lednum % 8;
-    temp = temp << shift;
-    if (val == 0) {
-        temp = ~temp;
-        leds[regnum] = leds[regnum] & temp;  
-    } else if (val == 1) {
-        leds[regnum] = leds[regnum] | temp;  
-    } else {
-        printf("Invalid selection of led!\r\n");
-    }
+    leds[lednum] = val;	 
     printf("wrote %i to led %i!\r\n",val,lednum);
 }
 
@@ -104,23 +90,28 @@ void readywait() {
     printf(" done!\r\n");
 }
 
+void shiftone() {
+    write_reg(DATASIZE_FILE, 0);
+    write_reg(DATA_FILE, 0x80000000);
+    write_reg(SHIFT_FILE, 0x1);
+}
+
+void shiftzero() {
+    write_reg(DATASIZE_FILE, 0);
+    write_reg(DATA_FILE, 0x00000000);
+    write_reg(SHIFT_FILE, 0x1);
+}
 
 
 //pushes data in leds out to the board
 void writeout() {
-    FILE *fp;
     int i;
-    //set datasize to 7 (really 8)
-    write_reg(DATASIZE_FILE, 0);
-    for (i = 0;i < 285;i++) {
-        printf("write to led %i val %i, and shifted val = %i\r\n",i,leds[284-i],leds[284-i] << 31);
-        uint8_t outbyte = 0xF0000000 & (leds[284-i] << 31) || 0x40000000;
-        printf("SHIFTING OUT: 0x%i! vs 0x80000000 = %i\r\n",outbyte,0x80000000);
-        write_reg(DATA_FILE, 0xF0000000);
-        //write_reg(DATA_FILE, outbyte);
-        write_reg(SHIFT_FILE, 0x8);
-    	write_reg(DISPLAY_FILE, 0x1);
-	    usleep(50000);
+    for(i = 0;i < 285;i++) {
+        if (leds[284-i] == 1) shiftone();
+	    usleep(5);
+        if (leds[284-i] == 0) shiftzero();
+    }
+    write_reg(DISPLAY_FILE, 0x1);
     printf(" done!\r\n");
 }
 
@@ -139,14 +130,10 @@ void clearboard() {
 
 void examplegame(){
 	initialize();
-	writeled(5,1);
-	writeled(2,1);
-	writeled(3,1);
-	writeled(6,1);
-	writeled(7,1);
-	writeled(9,1);
+    writeled(0,1);
 	writeout();
     usleep(100000);
+    /*
     clearboard();
 	int i;
 	printf("Writing to leds:\r\n");
@@ -156,7 +143,6 @@ void examplegame(){
 		writeout();
 		usleep(1000);
 	}
-    /*
 	sleep(5);
 	printf("\r\nTurning off leds:\r\n");
 	for(i = 0;i < 306;i++) {

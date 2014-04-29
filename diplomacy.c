@@ -103,6 +103,9 @@ int main() {
 	//testfunc();
 	//TODO START OF THE TEST ZONE TODO 
 	printf("Launching example game\r\n");
+    settmr(3);
+    starttmr();
+
 	examplegame();
     	//configurespi(); //setup cc1101 
 	//while(1) {
