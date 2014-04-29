@@ -144,7 +144,7 @@
 #define RSSI                         0
 #define LQI                          1
 #define BYTES_IN_RXFIFO              0x7F
-///////////////////////////////////////////////////////////////////////////////////////
+
 // Definitions for chip status
 #define CHIP_RDY                     0x80
 #define CHIP_STATE_MASK              0x70
@@ -169,9 +169,9 @@
 static const char *device = "/dev/spidev0.0";
 static uint8_t mode;
 static uint8_t bits = 8;
-//static uint32_t speed = 500000;
 static uint32_t speed = 1000000;
 static uint16_t delay = 10;
+
 static void pabort(const char *s) {
   perror(s);
   abort();
@@ -180,6 +180,7 @@ static void pabort(const char *s) {
 void changemode(int mode);
 uint8_t send(int len, uint8_t *in);  
 void setupspi();
+void rxdata(int len); 
 
 //Address, Data
 //38 elements
@@ -215,10 +216,10 @@ uint8_t config[38][2] = {
     { _FIFOTHR, 0x47 },
     { _IOCFG2, 0x29  },
     { _IOCFG0, 0x06  },
-    { _PKTCTRL1, 0x04},
+    { _PKTCTRL1, 0x08},
     { _PKTCTRL0, 0x04},
     { _ADDR, 0x00    },
-    { _PKTLEN, 0x05  },
+    { _PKTLEN, 0x07  },
     { _WORCTRL, 0xFB },
     { _SYNC1, 0xDD   },
     { _SYNC0, 0xDD   },
@@ -232,81 +233,8 @@ int fd;
 void testfunc() {
 printf("CALLED TESTING FUNCTION");
 }
-//default read for 7 byte default transfer byte size
-//returns 0 if valid data
-//        1 if invalid data
-int rxd() {
-    changemode(2); //put in rx mode
-    uint8_t tx[8] = {0,0,0,0,0,0,0,0};
-    tx[0] = RX_BURST;
-    struct spi_ioc_transfer fr = {
-        .tx_buf = (unsigned long) tx,
-        .rx_buf = (unsigned long) readingdata,
-        .len = 8,
-        .delay_usecs = delay,
-        .speed_hz = speed,
-        .bits_per_word = bits,
-    };
-    int ret = ioctl(fd, SPI_IOC_MESSAGE(1), &fr);
-    if (ret < 1) pabort("can't send spi message");
-    uint8_t check = readingdata[0] & 0x70; //check status byte
-    if (check != 0x10) {
-        printf("ERROR: read status != RX mode!\r\n");
-        return 1;
-    } else {
-        //check that ackcount[player id] == msg_id
-        if (ackcount[readingdata[1]] == readingdata[2]) {
-            printf("Found valid data: msg_id (0x%x) == ackcount[%i] (0x%x)!\r\n",readingdata[2],readingdata[1],ackcount[readingdata[1]]);
-            //Send back acknowledge
-            changemode(1); 
-            tx[0] = TX_BURST;
-            tx[1] = 0xED;
-            tx[2] = 0xAC;
-            send(3, tx);
-            printf("Sent acknowledge!\r\n");
-            ackcount[readingdata[1]]++; 
-            return 0;
-        } else if (ackcount[readingdata[1]] > readingdata[2]) { //already received this message -- ignore
-            printf("ERROR: ackcount > msg_id. ignoring message as I've already recieved.\r\n");
-            return 1;
-        } else {
-            printf("ERROR: ackcount < msg_id. So I guess the controller must have counted too many.\r\n");
-            return 1;
-        }
-    }
-    return 1;
-}
 
-//Simple read of len bytes off of the RX fifo
-//writes to readingdata[]
-void rxdata(int len) {
-    changemode(2); //put in rx 
-    printf("Reading %i bytes... ",len);
-    int i, ret;
-    uint8_t tx[len+1]; 
-    if (len < 1) printf("Receive request invalid - requested 0 bytes!\r\n");
-    if (len < 2) {
-        tx[0] = RX_BYTE;
-    } else {
-        tx[0] = RX_BURST;
-    }
-    struct spi_ioc_transfer fr = {
-        .tx_buf = (unsigned long) tx,
-        .rx_buf = (unsigned long) readingdata,
-        .len = len+1,
-        .delay_usecs = delay,
-        .speed_hz = speed,
-        .bits_per_word = bits,
-    };
-    ret = ioctl(fd, SPI_IOC_MESSAGE(1), &fr);
-    if (ret < 1) pabort("can't send spi message");
-    printf("RX: ");
-    for (i = 0;i < len+1;i++) printf("0x%x ",readingdata[i]);
-    printf("\r\n");
-    //check status byte
-    uint8_t check = readingdata[0] & 0x70;
-    if (check != 0x10) printf("WARNING: READ STATUS RETURN GAVE NON-RX VALUE: 0x%x!!!!\r\n",readingdata[0]);
-}
+
 
 //waits for acknowledge(s) from controller(s)
 //type 0 - 3 = controller to wait for
@@ -324,14 +252,16 @@ int ackwait(int type) {
         case 2:
         case 3: 
             while (count < 1) {
-		char buf[1];
-		scanf("%s",buf);
-		uint8_t ss = _SFRX;
-		send(1,&ss);
-		scanf("%s",buf);
                 rxdata(7); //read 2 byte acknowledge
+		//testfunc();
                 if ((readingdata[2] == 0xAC)&&(readingdata[1] == type)) {
                     printf("Found controller %i acknowledge!\r\n",type);
+		    changemode(0);
+		    usleep(2500);
+		    uint8_t clearbuf = _SFRX;
+		    send(1, &clearbuf);
+		    usleep(2500);
+		    printf("Cleared RX buffer!\r\n");
                     count++;
                 } else {
                     printf("ERROR: found invalid ack, reading again!\r\n");
@@ -339,7 +269,7 @@ int ackwait(int type) {
                     int telapsed = difftime(time(NULL), tstart);
                     if (telapsed > TIMEOUT) { //timeout 
                         printf("COM ERROR: Timed out after %i seconds waiting for acks!\r\n",TIMEOUT);
-                        //return 1; //TODO need this
+                        return 1; //TODO need this
                     }
                 }
             }
@@ -380,6 +310,61 @@ int ackwait(int type) {
     }
     return 0;
 }
+//Simple read of len bytes off of the RX fifo
+//writes to readingdata[]
+void rxdata(int len) {
+    int i, ret;
+    uint8_t tx[len+1]; 
+    //check for correct number of bytes
+	int done = 0;
+	while (done == 0) {
+    		changemode(0);
+    		tx[0] = _PKTSTATUS | 0x80;
+    		tx[1] = 0x00;
+		uint8_t pck = send(2, tx);
+		uint8_t gdo2 = pck & 0x04;
+    		printf("checking status of rx fifo");
+    		//changemode(2); //put in rx 
+		tx[0] = _RXBYTES | 0x80;
+    		uint8_t result = send(2, tx);
+		result = result & 0x7f;
+		printf("NUM BYTES IN RX FIFO = %x\r\n",result);
+		tx[0] = _SNOP;
+		tx[1] = _SNOP;
+		uint8_t nopresult = send(2,tx);
+		printf("NOP RESULT = %x\r\n",nopresult);
+		if ((gdo2 == 0x04)&&(result > 6)) {
+    			changemode(2); //put in rx 
+			printf("CRC CHECK OK!\r\n");
+    			printf("Reading %i bytes... ",len);
+    			if (len < 1) printf("Receive request invalid - requested 0 bytes!\r\n");
+    			if (len < 2) {
+        			tx[0] = RX_BYTE;
+    			} else {
+        			tx[0] = RX_BURST;
+    			}
+    			struct spi_ioc_transfer fr = {
+        			.tx_buf = (unsigned long) tx,
+        			.rx_buf = (unsigned long) readingdata,
+        			.len = len+1, //TODO changed from +1
+        			.delay_usecs = delay,
+        			.speed_hz = speed,
+        			.bits_per_word = bits,
+    			};
+    			ret = ioctl(fd, SPI_IOC_MESSAGE(1), &fr);
+    			if (ret < 1) pabort("can't send spi message");
+    			printf("RX: ");
+    			for (i = 0;i < len+1;i++) printf("0x%x ",readingdata[i]);
+    			//for (i = 0;i < len+1;i++) printf("0x%x ",readingdata[i]);
+    			printf("\r\n");
+
+    //check status byte
+    			uint8_t check = readingdata[0] & 0x70;
+    			if (check != 0x10) printf("WARNING: READ STATUS RETURN GAVE NON-RX VALUE: 0x%x!!!!\r\n",readingdata[0]);
+			done = 1;
+		} 
+	}
+}
 
 //transfers data via radio
 //default is 7 byte transfer burst (Not including header for spi)
@@ -390,9 +375,9 @@ void txdata(int acktype, uint8_t *in) {
     int ackd = 0;
     uint8_t tx[8]; 
     uint8_t rx[8]; 
-    tx[0] = TX_BURST;
     for (i = 1;i < 8;i++) tx[i] = in[i];
     while (ackd == 0) {
+    	tx[0] = TX_BURST;
         changemode(1);
         struct spi_ioc_transfer fr = {
             .tx_buf = (unsigned long) tx,
@@ -404,9 +389,14 @@ void txdata(int acktype, uint8_t *in) {
         };
         ret = ioctl(fd, SPI_IOC_MESSAGE(1), &fr);
         if (ret < 1) pabort("can't send spi message");
+	printf("\r\n\r\nSent Data: ");
+	for (i = 0;i < 8;i++) printf("0x%x ",tx[i]);
+	printf("done!\r\n\r\n");
+	//TODO END OF KNOWN GOOD TODO
         //check that status bit = tx mode
-	char buf[1];
-	scanf("%s",buf);
+	usleep(2500);	//ABSOLUTELY NECESSARY DO NOT REMOVE!!!!!!!!!!!!!!!!!!!!!!!
+	//char buf[1];
+	//scanf("%s",buf);
         uint8_t check = rx[0] & 0x70;
         if (check != 0x20) {
             printf("ERROR: CC1101 not in tx mode!\r\n");
@@ -415,7 +405,7 @@ void txdata(int acktype, uint8_t *in) {
             printf("ERROR: Failed to get acknowledges!\r\n");
         } else {
             printf("SUCCESS! Data: ");
-            for (i = 1;i < 8;i++) printf("0x%i ",tx[i]);
+            for (i = 1;i < 8;i++) printf("0x%x ",tx[i]);
             printf(" sent and acknowledged.\r\n");
             ackd = 1;
         }
@@ -651,7 +641,6 @@ int rx_orders_start(int roundtype) {
 
 void runspi(void) {
     printf("Called runspi!\r\n"); 
-    region_t *gd = (region_t*)g;
     configurespi();
 
     //Transmit test game data
@@ -675,7 +664,7 @@ void runspi(void) {
         tx[6] = 0x00;
         tx[7] = 0x00;
         //txdata(4, tx); //TODO needs this
-        txdata(1, tx);
+        txdata(0, tx);
 	
 	char buf[1];
 	scanf("%s",buf);
@@ -686,16 +675,19 @@ void runspi(void) {
         for (i = 0;i < 48;i++) {
             tx[1] = 0xED;
             tx[2] = ackcount[0]; //TODO using controller 0 as master -- maybe take mean here or diff?
-            tx[3] = (uint8_t)gd[i].player;
-            tx[4] = (uint8_t)gd[i].occupy_type;
+            tx[3] = (uint8_t)g[i].player;
+            tx[4] = (uint8_t)g[i].occupy_type;
             tx[5] = 0x00; //N/A
             tx[6] = 0x00;
             tx[7] = 0x00;
-            printf("%i: player - %i, type - %i\r\n",i,tx[3],tx[4]);
+            printf("%i: player - %i, type - %i\r\n\r\n",i,tx[3],tx[4]);
             changemode(1); //put in tx mode                                                                
-            txdata(4, tx);
-            sleep(1); //TODO hopefully get to remove
+            txdata(0, tx);
+            //txdata(4, tx);
+            usleep(2500); //TODO hopefully get to remove
         } 
+
+	scanf("%s",buf);
 
         //3. Wait for turn_up || btn_press --> send 0xBF ack
         sleep(10); //TODO need to replace with game state wait
@@ -735,7 +727,8 @@ void runspi(void) {
             int count = 0;
             while (done != 0xDE) {
                 printf("Waiting for packet... ");
-                int readcheck = rxd();
+                //int readcheck = rxd(); //TODO add back
+		int readcheck = 1; //TODO remove
                 if (readcheck == 0) { //valid read 
                     //check for done byte
                     if (readingdata[3] == 0xDE) { //found done byte
