@@ -471,7 +471,7 @@ void configurespi() {
         tx[0] = config[i][0]; 
         tx[1] = config[i][1];
         send(2, tx);
-	usleep(1);
+	usleep(10);
         check = config[i][0] | 0x80;
         tx[0] = check;
         tx[1] = 0x00;
@@ -483,7 +483,7 @@ void configurespi() {
         } else {
             printf(" success!\r\n");
         }
-        sleep(1);
+        //sleep(1);
     }
     changemode(0); //put in idle
     tx[0] = _SFTX;

@@ -15,4 +15,4 @@ diplomacy: $(OBJECTS)
 
 
 clean:
-	-rm -f diplomacy testorders startgame *.o 
+	-rm -f diplomacy *.o  *.d

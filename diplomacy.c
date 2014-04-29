@@ -103,8 +103,8 @@ int main() {
 	//testfunc();
 	//TODO START OF THE TEST ZONE TODO 
 	printf("Launching example game\r\n");
-	examplegame();
-    	configurespi(); //setup cc1101 
+	//examplegame();
+    	//configurespi(); //setup cc1101 
     	runspi(); //TODO testing loop for SPI
 	while(1) {
 		sleep(5);
