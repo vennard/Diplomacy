@@ -71,7 +71,6 @@ void initialize(){
 //total of 0 -> 307 valid locations
 void writeled(int lednum, int val) { 
     leds[lednum] = val;	 
-    printf("wrote %i to led %i!\r\n",val,lednum);
 }
 
 //waits until sees ready in ready_file
@@ -87,7 +86,6 @@ void readywait() {
         rdy = rdy & 0x01;
     }
     fclose(fp);
-    printf(" done!\r\n");
 }
 
 void shiftone() {
@@ -112,14 +110,6 @@ void writeout() {
         if (leds[284-i] == 0) shiftzero();
     }
     write_reg(DISPLAY_FILE, 0x1);
-    printf(" done!\r\n");
-}
-
-//type is 0 for army, 1 for fleet, 2 for owner, 3 for supply
-//returns 0 on success, 1 on failure
-int writeregion(int player, int region, int type) {
-    //I wonder if there is math I can do here
-    return 0;
 }
 
 void clearboard() {
@@ -130,27 +120,68 @@ void clearboard() {
 
 void examplegame(){
 	initialize();
-    writeled(0,1);
-	writeout();
-    usleep(100000);
-    /*
+    sleep(1);
+    //writeregion(0);
+    sleep(1);
+    //writeregion(5);
+    sleep(1);
     clearboard();
 	int i;
-	printf("Writing to leds:\r\n");
 	for(i = 0;i < 306;i++) {
-		printf("%i: ",i);
-		writeled(1, i);	
+		writeled(i, 1);	
 		writeout();
-		usleep(1000);
+		usleep(1);
 	}
-	sleep(5);
-	printf("\r\nTurning off leds:\r\n");
 	for(i = 0;i < 306;i++) {
-		writeled(0, i);	
+		writeled(i, 0);	
 		writeout();
-		printf("%i ",i);
-		usleep(1000);
+		usleep(1);
 	}
-*/
 	printf("Finished examplegame code!\r\n");
 }
+
+//type is 0 for army, 1 for fleet, 2 for owner, 3 for supply
+//returns 0 on success, 1 on failure
+//type ignored on countrys with only owner + 1 type
+int writeregion(int region) {
+    if (g[region].occupy_type != 2) { 
+        //occupied
+        switch (region) {
+            case 0: //ode
+                writeled(3, 1);
+                switch (g[region].player) {
+                    case 0:
+                        writeled(0,1);
+                        writeled(1,1);
+                        writeled(2,1);
+                        break;
+                    case 1:
+                        writeled(0,1);
+                        break;
+                    case 2:
+                        writeled(2,1);
+                        break;
+                    case 3:
+                        writeled(1,1);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case 5: 
+                if (g[region].occupy_type == 0) { //army
+                    writeled(19,1);
+                } else { //fleet
+                    writeled(20,1);
+                }
+                switch (g[region].player) {
+                }
+                break;
+            default:
+                break;
+         }
+    }
+    return 0;
+}
+
+

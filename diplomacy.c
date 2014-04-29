@@ -128,8 +128,8 @@ int main() {
     }
 
     while (gameRunning) {
-        //demo(); 
-    	runspi(); //TODO testing loop for SPI
+        demo(); 
+    	//runspi(); //TODO testing loop for SPI
         while(1);
         printgame(); // debug print of game status
         // ---- Start of Spring ----
