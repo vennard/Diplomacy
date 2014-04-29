@@ -26,7 +26,8 @@
 #include "include.h"
 
 //User Definitions
-#define TIMEOUT 10  //in seconds
+#define TIMEOUT 5000  //in clock cycles 
+//#define TIMEOUT 25000  //in clock cycles 
 
 /*
  *CC1101 Transfer Details (from the datasheet)
@@ -229,11 +230,20 @@ uint8_t readingdata[64];
 unsigned char ackcount[4];
 order_t inputorders[256][4];
 int fd;
+int ocount = 0;
 
 void testfunc() {
 printf("CALLED TESTING FUNCTION");
 }
 
+void flushbuffer() {
+	//printf("Flushing RX Buffer Manually...");
+	uint8_t tx[60];
+	tx[0] = RX_BURST;
+	changemode(2);
+	send(60,tx);
+	//printf(" finished flushing!!!! please work\r\n");
+}
 
 
 //waits for acknowledge(s) from controller(s)
@@ -241,8 +251,9 @@ printf("CALLED TESTING FUNCTION");
 //type 4 = wait for ack from all controllers
 //return - 0 if successfully got acknowledge(s)
 //         1 - timed out! retry comm and call again
-int ackwait(int type) {
-    time_t tstart = time(NULL);
+int ackwait(int type, int messageid) {
+    //time_t tstart = time(NULL);
+    clock_t tstart = clock();
     int i;
     int count = 0;
     int check[4] = {0,0,0,0};
@@ -252,32 +263,41 @@ int ackwait(int type) {
         case 2:
         case 3: 
             while (count < 1) {
+		//printf("\r\nLOOKING FOR ACK\r\n");
                 rxdata(7); //read 2 byte acknowledge
+		//printf("DONE LOOKING FOR ACK\r\n\r\n");
+	    
+		//printf("\r\nLOOKING FOR ACK\r\n");
+                //rxdata(7); //read 2 byte acknowledge
+		//printf("DONE LOOKING FOR ACK\r\n\r\n");
 		//testfunc();
-                if ((readingdata[2] == 0xAC)&&(readingdata[1] == type)) {
-                    printf("Found controller %i acknowledge!\r\n",type);
+                if ((readingdata[2] == 0xAC)&&(readingdata[1] == type)&&(readingdata[3] == messageid)) {
+                    //printf("Found controller %i acknowledge!\r\n",type);
 		    changemode(0);
 		    usleep(2500);
 		    uint8_t clearbuf = _SFRX;
 		    send(1, &clearbuf);
+		    //flushbuffer();
 		    usleep(2500);
-		    printf("Cleared RX buffer!\r\n");
+		    //printf("Cleared RX buffer!\r\n");
                     count++;
                 } else {
-                    printf("ERROR: found invalid ack, reading again!\r\n");
-                    //check timeout
-                    int telapsed = difftime(time(NULL), tstart);
-                    if (telapsed > TIMEOUT) { //timeout 
-                        printf("COM ERROR: Timed out after %i seconds waiting for acks!\r\n",TIMEOUT);
+                    //int telapsed = difftime(time(NULL), tstart);
+		  //  usleep(2500);
+		//	return 1;
+		    clock_t now = clock();
+		    int telapsed = now - tstart;
+                    //printf("ERROR: found invalid ack! TIME ELAPSED - %i (now %i - tstart %i)\r\n",telapsed,(int)now,(int)tstart);
+		    if ((telapsed < 0)||(telapsed > TIMEOUT)){
+                        //printf("COM ERROR: Timed out after %i seconds waiting for acks!\r\n",TIMEOUT);
                         return 1; //TODO need this
                     }
                 }
             }
-            printf("Continuing...\r\n");
             ackcount[type]++;//Increment acknowledge count
             break;
         case 4:
-            printf("Waiting for acknowledge from all 4 controllers...\r\n");
+            //printf("Waiting for acknowledge from all 4 controllers...\r\n");
             while (count < 4) {
                 rxdata(2); //read 2 byte acknowledge
                 if (readingdata[2] == 0xAC) { //found valid acknowledge
@@ -323,20 +343,17 @@ void rxdata(int len) {
     		tx[1] = 0x00;
 		uint8_t pck = send(2, tx);
 		uint8_t gdo2 = pck & 0x04;
-    		printf("checking status of rx fifo");
     		//changemode(2); //put in rx 
 		tx[0] = _RXBYTES | 0x80;
     		uint8_t result = send(2, tx);
 		result = result & 0x7f;
-		printf("NUM BYTES IN RX FIFO = %x\r\n",result);
 		tx[0] = _SNOP;
 		tx[1] = _SNOP;
 		uint8_t nopresult = send(2,tx);
-		printf("NOP RESULT = %x\r\n",nopresult);
 		if ((gdo2 == 0x04)&&(result > 6)) {
     			changemode(2); //put in rx 
-			printf("CRC CHECK OK!\r\n");
-    			printf("Reading %i bytes... ",len);
+			//printf("CRC CHECK OK!\r\n");
+    			//printf("Reading %i bytes...                    region ------------------------------------> %i ",len,ocount);
     			if (len < 1) printf("Receive request invalid - requested 0 bytes!\r\n");
     			if (len < 2) {
         			tx[0] = RX_BYTE;
@@ -353,10 +370,10 @@ void rxdata(int len) {
     			};
     			ret = ioctl(fd, SPI_IOC_MESSAGE(1), &fr);
     			if (ret < 1) pabort("can't send spi message");
-    			printf("RX: ");
-    			for (i = 0;i < len+1;i++) printf("0x%x ",readingdata[i]);
+    			//printf("\r\nRX: ");
     			//for (i = 0;i < len+1;i++) printf("0x%x ",readingdata[i]);
-    			printf("\r\n");
+    			//for (i = 0;i < len+1;i++) printf("0x%x ",readingdata[i]);
+    			//printf("\r\n");
 
     //check status byte
     			uint8_t check = readingdata[0] & 0x70;
@@ -389,9 +406,9 @@ void txdata(int acktype, uint8_t *in) {
         };
         ret = ioctl(fd, SPI_IOC_MESSAGE(1), &fr);
         if (ret < 1) pabort("can't send spi message");
-	printf("\r\n\r\nSent Data: ");
-	for (i = 0;i < 8;i++) printf("0x%x ",tx[i]);
-	printf("done!\r\n\r\n");
+	//printf("\r\n\r\nSent Data: ");
+	//for (i = 0;i < 8;i++) printf("0x%x ",tx[i]);
+	//printf("done!\r\n\r\n");
 	//TODO END OF KNOWN GOOD TODO
         //check that status bit = tx mode
 	usleep(2500);	//ABSOLUTELY NECESSARY DO NOT REMOVE!!!!!!!!!!!!!!!!!!!!!!!
@@ -401,12 +418,12 @@ void txdata(int acktype, uint8_t *in) {
         if (check != 0x20) {
             printf("ERROR: CC1101 not in tx mode!\r\n");
             changemode(0); //send back to idle
-        } else if (ackwait(acktype) == 1) {
-            printf("ERROR: Failed to get acknowledges!\r\n");
+        } else if (ackwait(acktype,tx[2]) == 1) {
+            //printf("ERROR: Failed to get acknowledges!\r\n");
         } else {
-            printf("SUCCESS! Data: ");
+            //printf("SUCCESS! Data: ");
             for (i = 1;i < 8;i++) printf("0x%x ",tx[i]);
-            printf(" sent and acknowledged.\r\n");
+            //printf(" sent and acknowledged.\r\n");
             ackd = 1;
         }
     }
@@ -419,9 +436,9 @@ uint8_t send(int len, uint8_t *in) {
     int i, ret;
     uint8_t rx[len];
     if (len >= 1){
-        printf("Sending %i bytes: ",len);
-        for (i = 0;i < len;i++) printf("0x%x ",in[i]);
-        printf("---------");
+        //printf("Sending %i bytes: ",len);
+        //for (i = 0;i < len;i++) printf("0x%x ",in[i]);
+        //printf("---------");
     } else {
         printf("Send invalid - requested 0 bytes!\r\n");
     }
@@ -527,15 +544,15 @@ void changemode(int mode) {
     switch (mode) {
         case 1: 
             state = CHIP_STATE_TX;
-            printf("Sending CC1101 to TX state.\r\n");
+            //printf("Sending CC1101 to TX state.\r\n");
             break;
         case 2: 
             state = CHIP_STATE_RX;
-            printf("Sending CC1101 to RX state.\r\n");
+            //printf("Sending CC1101 to RX state.\r\n");
             break;
         default:
             state = CHIP_STATE_IDLE;
-            printf("Sending CC1101 to IDLE state.\r\n");
+            //printf("Sending CC1101 to IDLE state.\r\n");
             break;
     }
     out = _SNOP; 
@@ -544,65 +561,65 @@ void changemode(int mode) {
     check = check & 0x70;
     while(state != check) {
         if (rdy == 0x80) {
-            printf("Chip is NOT READY. Waiting for power/crystal to settle.\r\n");
+            //printf("Chip is NOT READY. Waiting for power/crystal to settle.\r\n");
         } else {
             switch (check) {
                 case CHIP_STATE_SETTLING:
-                    printf("Chip is settling... waiting\r\n");
+                    //printf("Chip is settling... waiting\r\n");
                     break;
                 case CHIP_STATE_CALIBRATE:
-                    printf("Chip is calibrating... waiting\r\n");
+                    //printf("Chip is calibrating... waiting\r\n");
                     break;
                 case CHIP_STATE_TXFIFO_UNDERFLOW:
-                    printf("TX underflow detected, sending SFTX\r\n");
+                    //printf("TX underflow detected, sending SFTX\r\n");
                     out = _SFTX;
                     send(1, &out);
                     break;
                 case CHIP_STATE_RXFIFO_OVERFLOW:
-                    printf("RX overflow detected, sending SFRX\r\n");
+                    //printf("RX overflow detected, sending SFRX\r\n");
                     out = _SFRX;
                     send(1, &out);
                     break;
                 case CHIP_STATE_FSTON: 
-                    printf("Fast TX ready state detected, sending SIDLE\r\n");
+                    //printf("Fast TX ready state detected, sending SIDLE\r\n");
                     out = _SIDLE;
                     send(1, &out);
                     break;
                 case CHIP_STATE_RX: 
-                    printf("RX state detected, sending SIDLE\r\n");
+                    //printf("RX state detected, sending SIDLE\r\n");
                     out = _SIDLE;
                     send(1, &out);
                     break;
                 case CHIP_STATE_TX: 
-                    printf("TX state detected, sending SIDLE\r\n");
+                    //printf("TX state detected, sending SIDLE\r\n");
                     out = _SIDLE;
                     send(1, &out);
                 case CHIP_STATE_IDLE:
-                    printf("IDLE state detected, ");
+                    //printf("IDLE state detected, ");
                     if (state == CHIP_STATE_TX) {
-                        printf("sending to tx state\r\n");      
+                        //printf("sending to tx state\r\n");      
                         out = _STX;
                         send(1, &out);
                     } else if (state == CHIP_STATE_RX) {
-                        printf("sending to rx state\r\n");      
+                        //printf("sending to rx state\r\n");      
                         out = _SRX;
                         send(1, &out);
                     } else {
-                        printf("continuing\r\n");      
+                        //printf("continuing\r\n");      
                     }
                     break;
                 default:
                     break;
             }
         }
-        sleep(1);
-        printf("Rechecking... ");
+        usleep(2500);
+        //printf("Rechecking... ");
         out = _SNOP; 
         check = send(1, &out);
         rdy = check & 0x80; 
         check = check & 0x70;
     }
-    printf("found correct state! continuing...\r\n");
+    //printf("found correct state! continuing...\r\n");
 }
 
 
@@ -685,6 +702,8 @@ void runspi(void) {
             txdata(0, tx);
             //txdata(4, tx);
             usleep(2500); //TODO hopefully get to remove
+	    printf("Sent Region %i!\r\n",i);
+	    ocount++;
         } 
 
 	scanf("%s",buf);

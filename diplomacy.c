@@ -105,10 +105,9 @@ int main() {
 	printf("Launching example game\r\n");
 	//examplegame();
     	//configurespi(); //setup cc1101 
-    	runspi(); //TODO testing loop for SPI
-	while(1) {
-		sleep(5);
-	}
+	//while(1) {
+//		sleep(5);
+//	}
     //TODO END OF TEST ZONE TODO
     printf("Welcome to Diplomacy!\r\n");
     time(&timestart); //get start time
@@ -126,6 +125,7 @@ int main() {
     }
 
     while (gameRunning) {
+    	runspi(); //TODO testing loop for SPI
         printgame(); // debug print of game status
         // ---- Start of Spring ----
         printf("--------- Start of year %i ----------\r\n\r\n",year);
