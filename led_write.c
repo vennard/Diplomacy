@@ -35,7 +35,6 @@ int write_reg(const char* file, int val) {
     fp = fopen(file, "w");
     if (fp == NULL) perror("failed to open file");
     fprintf(fp,"%x",val);
-    //printf("wrote %x to %s!\r\n",val,file);
     fclose(fp);
 }
 
@@ -68,8 +67,9 @@ void initialize(){
 }
 
 //writes val to lednum
-//total of 0 -> 307 valid locations
+//total of 0 -> 284 valid index locations
 void writeled(int lednum, int val) { 
+    if ((lednum > 284)||(lednum < 0)) perror("tried to write to invalid led!\r\n");
     leds[lednum] = val;	 
 }
 
@@ -88,26 +88,28 @@ void readywait() {
     fclose(fp);
 }
 
-void shiftone() {
+void shiftin(int val) {
     write_reg(DATASIZE_FILE, 0);
-    write_reg(DATA_FILE, 0x80000000);
-    write_reg(SHIFT_FILE, 0x1);
+    switch(val) {
+        case 0: 
+            write_reg(DATA_FILE, 0x00000000);
+            write_reg(SHIFT_FILE, 0x1);
+            break;
+        case 1:
+            write_reg(DATA_FILE, 0x80000000);
+            write_reg(SHIFT_FILE, 0x1);
+            break;
+        default:
+            perror("tried to shift in invalid val\r\n");
+            break;
+    }
 }
-
-void shiftzero() {
-    write_reg(DATASIZE_FILE, 0);
-    write_reg(DATA_FILE, 0x00000000);
-    write_reg(SHIFT_FILE, 0x1);
-}
-
 
 //pushes data in leds out to the board
 void writeout() {
     int i;
     for(i = 0;i < 285;i++) {
-        if (leds[284-i] == 1) shiftone();
-	    usleep(5);
-        if (leds[284-i] == 0) shiftzero();
+        shiftin(leds[284-i]);
     }
     write_reg(DISPLAY_FILE, 0x1);
 }
@@ -116,6 +118,25 @@ void clearboard() {
     printf("trying to clear board!");
     initialize();
     writeout();
+}
+
+void fancystart() {
+    printf("oh fancy\r\n");
+    srand(time(NULL));
+    initialize();
+    int spread = 20;
+    int density = 15;
+    int i, j;
+    for(i = 0;i < 5;i++) {
+        int startloc = rand() % 285;
+        for (j = 0;j < density;j++) {
+            int plusminus = rand() % 2;
+            if (plusminus == 0) plusminus = -1;
+            int loc = (plusminus*(rand() % spread)) + startloc;
+            if ((loc < 285)&&(loc >= 0)) writeled(loc, 1);
+            usleep(1);
+        }
+    }
 }
 
 void examplegame(){
@@ -143,45 +164,1544 @@ void examplegame(){
 //type is 0 for army, 1 for fleet, 2 for owner, 3 for supply
 //returns 0 on success, 1 on failure
 //type ignored on countrys with only owner + 1 type
-int writeregion(int region) {
-    if (g[region].occupy_type != 2) { 
-        //occupied
-        switch (region) {
-            case 0: //ode
+void writeregion(int region) {
+    //occupied
+    switch (region) {
+        case 0: //ode
+            if (g[region].occupy_type != 2) {
                 writeled(3, 1);
                 switch (g[region].player) {
-                    case 0:
+                    case 0: //white
                         writeled(0,1);
                         writeled(1,1);
                         writeled(2,1);
                         break;
-                    case 1:
+                    case 1: //red
                         writeled(0,1);
                         break;
-                    case 2:
+                    case 2: //blue
                         writeled(2,1);
                         break;
-                    case 3:
+                    case 3: //green
                         writeled(1,1);
                         break;
                     default:
                         break;
                 }
-                break;
-            case 5: 
-                if (g[region].occupy_type == 0) { //army
-                    writeled(19,1);
-                } else { //fleet
-                    writeled(20,1);
-                }
+            }
+            break;
+        case 1: //vis
+            if (g[region].occupy_type != 2) {
+                writeled(55, 1);
                 switch (g[region].player) {
+                    case 0: //white
+                        writeled(56,1);
+                        writeled(57,1);
+                        writeled(58,1);
+                        break;
+                    case 1: //red
+                        writeled(58,1);
+                        break;
+                    case 2: //blue
+                        writeled(56,1);
+                        break;
+                    case 3: //green
+                        writeled(57,1);
+                        break;
+                    default:
+                        break;
                 }
+            }
+            break;
+        case 2: //war
+            if (g[region].occupy_type != 2) {
+                writeled(14,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(8,1);
+                        writeled(9,1);
+                        writeled(10,1);
+                        break;
+                    case 1: //red
+                        writeled(8,1);
+                        break;
+                    case 2: //blue
+                        writeled(10,1);
+                        break;
+                    case 3: //green
+                        writeled(9,1);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            switch (g[region].supply) {
+            case 0: //white
+                writeled(11,1);
+                writeled(12,1);
+                writeled(13,1);
+                break;
+            case 1: //red
+                writeled(11,1);
+                break;
+            case 2: //blue
+                writeled(13,1);
+                break;
+            case 3: //green
+                writeled(12,1);
                 break;
             default:
                 break;
-         }
+            }
+            break;
+        case 3: //bre
+            if (g[region].occupy_type != 2) {
+                writeled(42,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(15,1);
+                        writeled(46,1);
+                        writeled(47,1);
+                        break;
+                    case 1: //red
+                        writeled(15,1);
+                        break;
+                    case 2: //blue
+                        writeled(46,1);
+                        break;
+                    case 3: //green
+                        writeled(47,1);
+                    break;
+                    default:
+                    break;
+                }
+
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(43,1);
+                    writeled(44,1);
+                    writeled(45,1);
+                    break;
+                case 1: //red
+                    writeled(45,1);
+                    break;
+                case 2: //blue
+                    writeled(43,1);
+                    break;
+                case 3: //green
+                    writeled(44,1);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 4: //min
+            if (g[region].occupy_type != 2) {
+                writeled(42,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(15,1);
+                        writeled(46,1);
+                        writeled(47,1);
+                        break;
+                    case 1: //red
+                        writeled(15,1);
+                        break;
+                    case 2: //blue
+                        writeled(46,1);
+                        break;
+                    case 3: //green
+                        writeled(47,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(43,1);
+                    writeled(44,1);
+                    writeled(45,1);
+                    break;
+                case 1: //red
+                    writeled(45,1);
+                    break;
+                case 2: //blue
+                    writeled(43,1);
+                    break;
+                case 3: //green
+                    writeled(44,1);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 5: //str 
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(20,1);
+                if (g[region].occupy_type == 0) writeled(19,1);
+                /* yeah so this doesn't exist apparently TODO check this
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(15,1);
+                        writeled(46,1);
+                        writeled(47,1);
+                        break;
+                    case 1: //red
+                        writeled(15,1);
+                        break;
+                    case 2: //blue
+                        writeled(46,1);
+                        break;
+                    case 3: //green
+                        writeled(47,1);
+                    break;
+                    default:
+                    break;
+                }
+                */
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(16,1);
+                    writeled(17,1);
+                    writeled(18,1);
+                    break;
+                case 1: //red
+                    writeled(16,1);
+                    break;
+                case 2: //blue
+                    writeled(18,1);
+                    break;
+                case 3: //green
+                    writeled(17,1);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        default:
+            break;
+        case 6: //dan
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(28,1);
+                if (g[region].occupy_type == 0) writeled(27,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(21,1);
+                        writeled(22,1);
+                        writeled(23,1);
+                        break;
+                    case 1: //red
+                        writeled(21,1);
+                        break;
+                    case 2: //blue
+                        writeled(23,1);
+                        break;
+                    case 3: //green
+                        writeled(22,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(24,1);
+                    writeled(25,1);
+                    writeled(26,1);
+                    break;
+                case 1: //red
+                    writeled(24,1);
+                    break;
+                case 2: //blue
+                    writeled(26,1);
+                    break;
+                case 3: //green
+                    writeled(25,1);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 7: //wkr
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 0) writeled(63,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(29,1);
+                        writeled(30,1);
+                        writeled(31,1);
+                        break;
+                    case 1: //red
+                        writeled(29,1);
+                        break;
+                    case 2: //blue
+                        writeled(31,1);
+                        break;
+                    case 3: //green
+                        writeled(30,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+        case 8: //nar
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 0) writeled(59,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(60,1);
+                        writeled(61,1);
+                        writeled(62,1);
+                        break;
+                    case 1: //red
+                        writeled(62,1);
+                        break;
+                    case 2: //blue
+                        writeled(60,1);
+                        break;
+                    case 3: //green
+                        writeled(61,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            break;
+        case 9: //wes
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 0) writeled(7,1);
+                if (g[region].occupy_type == 1) writeled(54,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(4,1);
+                        writeled(5,1);
+                        writeled(6,1);
+                        break;
+                    case 1: //red
+                        writeled(4,1);
+                        break;
+                    case 2: //blue
+                        writeled(6,1);
+                        break;
+                    case 3: //green
+                        writeled(5,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            break;
+        case 10: //kat
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(50,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(51,1);
+                        writeled(52,1);
+                        writeled(53,1);
+                        break;
+                    case 1: //red
+                        writeled(53,1);
+                        break;
+                    case 2: //blue
+                        writeled(51,1);
+                        break;
+                    case 3: //green
+                        writeled(52,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            break;
+        case 11: //cop TODO check these values
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(64,1);
+                if (g[region].occupy_type == 0) writeled(66,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(48,1);
+                        writeled(49,1);
+                        writeled(67,1);
+                        break;
+                    case 1: //red
+                        writeled(49,1);
+                        break;
+                    case 2: //blue
+                        writeled(67,1);
+                        break;
+                    case 3: //green
+                        writeled(48,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(65,1);
+                    writeled(68,1);
+                    writeled(69,1);
+                    break;
+                case 1: //red
+                    writeled(65,1);
+                    break;
+                case 2: //blue
+                    writeled(69,1);
+                    break;
+                case 3: //green
+                    writeled(68,1);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 12: //sba
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(73,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(70,1);
+                        writeled(71,1);
+                        writeled(72,1);
+                        break;
+                    case 1: //red
+                        writeled(70,1);
+                        break;
+                    case 2: //blue
+                        writeled(72,1);
+                        break;
+                    case 3: //green
+                        writeled(71,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            break;
+        case 13: //mba
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(77,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(70,1);
+                        writeled(71,1);
+                        writeled(72,1);
+                        break;
+                    case 1: //red
+                        writeled(70,1);
+                        break;
+                    case 2: //blue
+                        writeled(72,1);
+                        break;
+                    case 3: //green
+                        writeled(71,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            break;
+         case 14: //kon
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(85,1);
+                if (g[region].occupy_type == 0) writeled(84,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(78,1);
+                        writeled(79,1);
+                        writeled(80,1);
+                        break;
+                    case 1: //red
+                        writeled(78,1);
+                        break;
+                    case 2: //blue
+                        writeled(80,1);
+                        break;
+                    case 3: //green
+                        writeled(79,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(81,1);
+                    writeled(82,1);
+                    writeled(83,1);
+                    break;
+                case 1: //red
+                    writeled(81,1);
+                    break;
+                case 2: //blue
+                    writeled(83,1);
+                    break;
+                case 3: //green
+                    writeled(82,1);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 15: //ron
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(93,1);
+                if (g[region].occupy_type == 0) writeled(92,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(86,1);
+                        writeled(87,1);
+                        writeled(88,1);
+                        break;
+                    case 1: //red
+                        writeled(86,1);
+                        break;
+                    case 2: //blue
+                        writeled(88,1);
+                        break;
+                    case 3: //green
+                        writeled(87,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(89,1);
+                    writeled(90,1);
+                    writeled(91,1);
+                    break;
+                case 1: //red
+                    writeled(89,1);
+                    break;
+                case 2: //blue
+                    writeled(91,1);
+                    break;
+                case 3: //green
+                    writeled(90,1);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 16: //hab
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(110,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(111,1);
+                        writeled(94,1);
+                        writeled(95,1);
+                        break;
+                    case 1: //red
+                        writeled(94,1);
+                        break;
+                    case 2: //blue
+                        writeled(111,1);
+                        break;
+                    case 3: //green
+                        writeled(95,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            break;
+        case 17: //rig
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(102,1);
+                if (g[region].occupy_type == 0) writeled(103,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(104,1);
+                        writeled(105,1);
+                        writeled(106,1);
+                        break;
+                    case 1: //red
+                        writeled(106,1);
+                        break;
+                    case 2: //blue
+                        writeled(104,1);
+                        break;
+                    case 3: //green
+                        writeled(105,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(107,1);
+                    writeled(108,1);
+                    writeled(109,1);
+                    break;
+                case 1: //red
+                    writeled(109,1);
+                    break;
+                case 2: //blue
+                    writeled(107,1);
+                    break;
+                case 3: //green
+                    writeled(108,1);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 18: //stp
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(126,1);
+                if (g[region].occupy_type == 0) writeled(127,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(96,1);
+                        writeled(97,1);
+                        writeled(98,1);
+                        break;
+                    case 1: //red
+                        writeled(98,1);
+                        break;
+                    case 2: //blue
+                        writeled(96,1);
+                        break;
+                    case 3: //green
+                        writeled(97,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(99,1);
+                    writeled(100,1);
+                    writeled(101,1);
+                    break;
+                case 1: //red
+                    writeled(101,1);
+                    break;
+                case 2: //blue
+                    writeled(99,1);
+                    break;
+                case 3: //green
+                    writeled(100,1);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 19: //tal
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(118,1);
+                if (g[region].occupy_type == 0) writeled(119,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(123,1);
+                        writeled(124,1);
+                        writeled(125,1);
+                        break;
+                    case 1: //red
+                        writeled(125,1);
+                        break;
+                    case 2: //blue
+                        writeled(123,1);
+                        break;
+                    case 3: //green
+                        writeled(124,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(120,1);
+                    writeled(121,1);
+                    writeled(122,1);
+                    break;
+                case 1: //red
+                    writeled(122,1);
+                    break;
+                case 2: //blue
+                    writeled(120,1);
+                    break;
+                case 3: //green
+                    writeled(121,1);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 20: //gor
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(114,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(115,1);
+                        writeled(116,1);
+                        writeled(117,1);
+                        break;
+                    case 1: //red
+                        writeled(117,1);
+                        break;
+                    case 2: //blue
+                        writeled(115,1);
+                        break;
+                    case 3: //green
+                        writeled(116,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            break;
+        case 21: //saa
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(133,1);
+                if (g[region].occupy_type == 0) writeled(132,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(112,1);
+                        writeled(113,1);
+                        writeled(128,1);
+                        break;
+                    case 1: //red
+                        writeled(113,1);
+                        break;
+                    case 2: //blue
+                        writeled(128,1);
+                        break;
+                    case 3: //green
+                        writeled(112,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(129,1);
+                    writeled(130,1);
+                    writeled(131,1);
+                    break;
+                case 1: //red
+                    writeled(129,1);
+                    break;
+                case 2: //blue
+                    writeled(131,1);
+                    break;
+                case 3: //green
+                    writeled(130,1);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 22: //nba
+        if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(137,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(134,1);
+                        writeled(135,1);
+                        writeled(136,1);
+                        break;
+                    case 1: //red
+                        writeled(134,1);
+                        break;
+                    case 2: //blue
+                        writeled(136,1);
+                        break;
+                    case 3: //green
+                        writeled(135,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+        break;
+        case 23: //sli
+        if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(145,1);
+                if (g[region].occupy_type == 0) writeled(144,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(138,1);
+                        writeled(139,1);
+                        writeled(140,1);
+                        break;
+                    case 1: //red
+                        writeled(138,1);
+                        break;
+                    case 2: //blue
+                        writeled(140,1);
+                        break;
+                    case 3: //green
+                        writeled(139,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(141,1);
+                    writeled(142,1);
+                    writeled(143,1);
+                    break;
+                case 1: //red
+                    writeled(141,1);
+                    break;
+                case 2: //blue
+                    writeled(143,1);
+                    break;
+                case 3: //green
+                    writeled(142,1);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 24: //gos
+        if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(168,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(169,1);
+                        writeled(170,1);
+                        writeled(171,1);
+                        break;
+                    case 1: //red
+                        writeled(171,1);
+                        break;
+                    case 2: //blue
+                        writeled(169,1);
+                        break;
+                    case 3: //green
+                        writeled(170,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+        break;
+        case 25: //bol
+        if (g[region].occupy_type != 2) {
+                int coast = rand() % 2;
+                coast = coast + 154;
+                if (g[region].occupy_type == 1) writeled(coast,1); //TODO add coast support here
+                if (g[region].occupy_type == 0) writeled(153,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(150,1);
+                        writeled(151,1);
+                        writeled(152,1);
+                        break;
+                    case 1: //red
+                        writeled(150,1);
+                        break;
+                    case 2: //blue
+                        writeled(152,1);
+                        break;
+                    case 3: //green
+                        writeled(151,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+        break;
+        case 26: //mal
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(172,1);
+                if (g[region].occupy_type == 0) writeled(173,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(156,1);
+                        writeled(157,1);
+                        writeled(158,1);
+                        break;
+                    case 1: //red
+                        writeled(156,1);
+                        break;
+                    case 2: //blue
+                        writeled(158,1);
+                        break;
+                    case 3: //green
+                        writeled(157,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(174,1);
+                    writeled(175,1);
+                    writeled(159,1);
+                    break;
+                case 1: //red
+                    writeled(159,1);
+                    break;
+                case 2: //blue
+                    writeled(174,1);
+                    break;
+                case 3: //green
+                    writeled(175,1);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 27: //ska
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(149,1); 
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(146,1);
+                        writeled(147,1);
+                        writeled(148,1);
+                        break;
+                    case 1: //red
+                        writeled(146,1);
+                        break;
+                    case 2: //blue
+                        writeled(148,1);
+                        break;
+                    case 3: //green
+                        writeled(147,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+        break;
+        case 28: //got
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(160,1);
+                if (g[region].occupy_type == 0) writeled(161,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(165,1);
+                        writeled(166,1);
+                        writeled(167,1);
+                        break;
+                    case 1: //red
+                        writeled(167,1);
+                        break;
+                    case 2: //blue
+                        writeled(165,1);
+                        break;
+                    case 3: //green
+                        writeled(163,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(162,1);
+                    writeled(163,1);
+                    writeled(164,1);
+                    break;
+                case 1: //red
+                    writeled(164,1);
+                    break;
+                case 2: //blue
+                    writeled(162,1);
+                    break;
+                case 3: //green
+                    writeled(163,1);
+                    break;
+                default:
+                    break;
+            }
+         break;
+         case 29: //van
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(188,1); 
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(189,1);
+                        writeled(190,1);
+                        writeled(191,1);
+                        break;
+                    case 1: //red
+                        writeled(191,1);
+                        break;
+                    case 2: //blue
+                        writeled(189,1);
+                        break;
+                    case 3: //green
+                        writeled(190,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+        break;
+        case 30: //sil
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(183,1); 
+                if (g[region].occupy_type == 0) writeled(184,1); 
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(185,1);
+                        writeled(186,1);
+                        writeled(187,1);
+                        break;
+                    case 1: //red
+                        writeled(187,1);
+                        break;
+                    case 2: //blue
+                        writeled(185,1);
+                        break;
+                    case 3: //green
+                        writeled(186,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+        break;
+        case 31: //sto
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(192,1);
+                if (g[region].occupy_type == 0) writeled(176,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(178,1);
+                        writeled(179,1);
+                        writeled(177,1);
+                        break;
+                    case 1: //red
+                        writeled(179,1);
+                        break;
+                    case 2: //blue
+                        writeled(177,1);
+                        break;
+                    case 3: //green
+                        writeled(178,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(180,1);
+                    writeled(181,1);
+                    writeled(182,1);
+                    break;
+                case 1: //red
+                    writeled(182,1);
+                    break;
+                case 2: //blue
+                    writeled(180,1);
+                    break;
+                case 3: //green
+                    writeled(181,1);
+                    break;
+                default:
+                    break;
+            }
+         break;
+         case 32: //ala
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(200,1);
+                if (g[region].occupy_type == 0) writeled(199,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(193,1);
+                        writeled(194,1);
+                        writeled(195,1);
+                        break;
+                    case 1: //red
+                        writeled(193,1);
+                        break;
+                    case 2: //blue
+                        writeled(195,1);
+                        break;
+                    case 3: //green
+                        writeled(194,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(196,1);
+                    writeled(197,1);
+                    writeled(198,1);
+                    break;
+                case 1: //red
+                    writeled(196,1);
+                    break;
+                case 2: //blue
+                    writeled(198,1);
+                    break;
+                case 3: //green
+                    writeled(197,1);
+                    break;
+                default:
+                    break;
+            }
+         break;
+        case 33: //sgo
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(204,1); 
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(201,1);
+                        writeled(202,1);
+                        writeled(203,1);
+                        break;
+                    case 1: //red
+                        writeled(201,1);
+                        break;
+                    case 2: //blue
+                        writeled(203,1);
+                        break;
+                    case 3: //green
+                        writeled(202,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+        break;
+        case 34: //hel
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(212,1);
+                if (g[region].occupy_type == 0) writeled(211,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(208,1);
+                        writeled(209,1);
+                        writeled(210,1);
+                        break;
+                    case 1: //red
+                        writeled(208,1);
+                        break;
+                    case 2: //blue
+                        writeled(210,1);
+                        break;
+                    case 3: //green
+                        writeled(211,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(205,1);
+                    writeled(206,1);
+                    writeled(207,1);
+                    break;
+                case 1: //red
+                    writeled(205,1);
+                    break;
+                case 2: //blue
+                    writeled(207,1);
+                    break;
+                case 3: //green
+                    writeled(206,1);
+                    break;
+                default:
+                    break;
+            }
+        break;
+        case 35: //gof
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(216,1); 
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(213,1);
+                        writeled(214,1);
+                        writeled(215,1);
+                        break;
+                    case 1: //red
+                        writeled(213,1);
+                        break;
+                    case 2: //blue
+                        writeled(215,1);
+                        break;
+                    case 3: //green
+                        writeled(214,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+        break;
+        case 36: //lla
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(220,1); 
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(217,1);
+                        writeled(218,1);
+                        writeled(219,1);
+                        break;
+                    case 1: //red
+                        writeled(217,1);
+                        break;
+                    case 2: //blue
+                        writeled(219,1);
+                        break;
+                    case 3: //green
+                        writeled(218,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+        break;
+        case 37: //kuy
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(238,1); 
+                if (g[region].occupy_type == 0) writeled(239,1); 
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(221,1);
+                        writeled(222,1);
+                        writeled(223,1);
+                        break;
+                    case 1: //red
+                        writeled(221,1);
+                        break;
+                    case 2: //blue
+                        writeled(223,1);
+                        break;
+                    case 3: //green
+                        writeled(222,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+        break;
+        case 38: //kuo
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(230,1);
+                if (g[region].occupy_type == 0) writeled(231,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(235,1);
+                        writeled(236,1);
+                        writeled(237,1);
+                        break;
+                    case 1: //red
+                        writeled(237,1);
+                        break;
+                    case 2: //blue
+                        writeled(235,1);
+                        break;
+                    case 3: //green
+                        writeled(236,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(232,1);
+                    writeled(233,1);
+                    writeled(234,1);
+                    break;
+                case 1: //red
+                    writeled(234,1);
+                    break;
+                case 2: //blue
+                    writeled(232,1);
+                    break;
+                case 3: //green
+                    writeled(233,1);
+                    break;
+                default:
+                    break;
+            }
+        break;
+        case 39: //sai
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(225,1); 
+                if (g[region].occupy_type == 0) writeled(226,1); 
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(227,1);
+                        writeled(228,1);
+                        writeled(229,1);
+                        break;
+                    case 1: //red
+                        writeled(229,1);
+                        break;
+                    case 2: //blue
+                        writeled(227,1);
+                        break;
+                    case 3: //green
+                        writeled(228,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+        break;
+        case 40: //vas
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(249,1);
+                if (g[region].occupy_type == 0) writeled(250,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(252,1);
+                        writeled(253,1);
+                        writeled(251,1);
+                        break;
+                    case 1: //red
+                        writeled(253,1);
+                        break;
+                    case 2: //blue
+                        writeled(251,1);
+                        break;
+                    case 3: //green
+                        writeled(252,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(224,1);
+                    writeled(254,1);
+                    writeled(255,1);
+                    break;
+                case 1: //red
+                    writeled(224,1);
+                    break;
+                case 2: //blue
+                    writeled(254,1);
+                    break;
+                case 3: //green
+                    writeled(255,1);
+                    break;
+                default:
+                    break;
+            }
+        break;
+        case 41: //ngo
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(245,1); 
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(246,1);
+                        writeled(247,1);
+                        writeled(248,1);
+                        break;
+                    case 1: //red
+                        writeled(248,1);
+                        break;
+                    case 2: //blue
+                        writeled(246,1);
+                        break;
+                    case 3: //green
+                        writeled(247,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+        break;
+        case 42: //sun
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(256,1);
+                if (g[region].occupy_type == 0) writeled(257,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(258,1);
+                        writeled(240,1);
+                        writeled(241,1);
+                        break;
+                    case 1: //red
+                        writeled(241,1);
+                        break;
+                    case 2: //blue
+                        writeled(258,1);
+                        break;
+                    case 3: //green
+                        writeled(240,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(242,1);
+                    writeled(243,1);
+                    writeled(244,1);
+                    break;
+                case 1: //red
+                    writeled(244,1);
+                    break;
+                case 2: //blue
+                    writeled(242,1);
+                    break;
+                case 3: //green
+                    writeled(243,1);
+                    break;
+                default:
+                    break;
+            }
+        break;
+        case 43: //stj
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 0) writeled(262,1); 
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(260,1);
+                        writeled(261,1);
+                        writeled(259,1);
+                        break;
+                    case 1: //red
+                        writeled(259,1);
+                        break;
+                    case 2: //blue
+                        writeled(261,1);
+                        break;
+                    case 3: //green
+                        writeled(260,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+        break;
+        case 44: //keb
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(267,1); 
+                if (g[region].occupy_type == 0) writeled(266,1); 
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(263,1);
+                        writeled(264,1);
+                        writeled(265,1);
+                        break;
+                    case 1: //red
+                        writeled(263,1);
+                        break;
+                    case 2: //blue
+                        writeled(265,1);
+                        break;
+                    case 3: //green
+                        writeled(264,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+        break;
+        case 45: //tor
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(275,1);
+                if (g[region].occupy_type == 0) writeled(274,1);
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(268,1);
+                        writeled(269,1);
+                        writeled(270,1);
+                        break;
+                    case 1: //red
+                        writeled(268,1);
+                        break;
+                    case 2: //blue
+                        writeled(270,1);
+                        break;
+                    case 3: //green
+                        writeled(269,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            switch (g[region].supply) {
+                case 0: //white
+                    writeled(271,1);
+                    writeled(272,1);
+                    writeled(273,1);
+                    break;
+                case 1: //red
+                    writeled(271,1);
+                    break;
+                case 2: //blue
+                    writeled(273,1);
+                    break;
+                case 3: //green
+                    writeled(272,1);
+                    break;
+                default:
+                    break;
+            }
+        break;
+        case 46: //oul
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 1) writeled(280,1); 
+                if (g[region].occupy_type == 0) writeled(279,1); 
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(276,1);
+                        writeled(278,1);
+                        writeled(277,1);
+                        break;
+                    case 1: //red
+                        writeled(276,1);
+                        break;
+                    case 2: //blue
+                        writeled(278,1);
+                        break;
+                    case 3: //green
+                        writeled(277,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+        break;
+        case 47: //ima
+            if (g[region].occupy_type != 2) {
+                if (g[region].occupy_type == 0) writeled(284,1); 
+                switch (g[region].player) {
+                    case 0: //white
+                        writeled(281,1);
+                        writeled(282,1);
+                        writeled(283,1);
+                        break;
+                    case 1: //red
+                        writeled(281,1);
+                        break;
+                    case 2: //blue
+                        writeled(283,1);
+                        break;
+                    case 3: //green
+                        writeled(282,1);
+                    break;
+                    default:
+                    break;
+                }
+            }
+        break;
+    writeout();
     }
-    return 0;
 }
+
 
 

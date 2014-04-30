@@ -105,8 +105,13 @@ int main() {
 	printf("Launching example game\r\n");
     settmr(3);
     starttmr();
-
+    fancystart();
 	examplegame();
+    int i;
+    for(i = 0;i < 48;i++) {
+        writeregion(i);
+        usleep(2);
+    }
     	//configurespi(); //setup cc1101 
 	//while(1) {
 //		sleep(5);

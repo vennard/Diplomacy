@@ -26,6 +26,8 @@ void demo(void);
 void examplegame(void);
 void writeled(int val, int lednum);
 void writeout(void);
+void writeregion(int region);
+void fancystart(void);
 
 //calls for timer control
 void settmr(int min);

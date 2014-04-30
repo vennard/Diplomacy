@@ -752,8 +752,7 @@ void demo(void) {
     printf("Timer done!\r\n");
 
 
-   scanf("%s",bf);
-
+    scanf("%s",bf);
 
     //5. Send lock to controller
     printf("Sending lock signal to controller!\r\n");
@@ -765,7 +764,6 @@ void demo(void) {
     tx[6] = 0x00;
     tx[7] = 0x00;
     txdata(0, tx);
-
 
     //6. Zedboard polls controller
     printf("Sending polling signal to controller!\r\n");
