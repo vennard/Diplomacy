@@ -2,11 +2,14 @@
 #define __include_h__
 
 #define MAX_ORDERS 20000
+#define ORDERS_TIME 15
+#define RETREAT_TIME 5
+#define SUPPLY_TIME 5
 
 extern region_t g[48];
 extern order_t o[MAX_ORDERS];
 extern int validOrders;
-extern int numO,Sneeded,Rneeded;
+extern int numO,Sneeded,Rneeded,numinc;
 
 int arbitor(void);
 int loadgamedata(char f[]);
@@ -17,7 +20,7 @@ int secondvalidate(void);
 
 //calls for spi communication
 void runspi(void);
-void tx_phase_start(int phasetype, void* ptr);
+void tx_phase_start(int phasetype);
 int rx_orders_start(int roundtype);
 void configurespi(void);
 void demo(void);
@@ -28,6 +31,8 @@ void writeled(int val, int lednum);
 void writeout(void);
 void writeregion(int region);
 void fancystart(void);
+void logo(void);
+void clearboard(void);
 
 //calls for timer control
 void settmr(int min);

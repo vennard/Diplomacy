@@ -15,6 +15,7 @@ int numValidOrders = 0;
 
 //TODO add support for validating retreat and supply rounds
 int arbitor() {
+    int i;
 	printf("Starting the Arbitrator...\r\n");
     removeduplicates();
     numValidOrders = firstvalidate();
@@ -30,6 +31,7 @@ int arbitor() {
     validate(0);
 
     execute();
+    for(i = 0;i < 48;i++) writeregion(i); //write out to gameboard
     clean();
     return 0;
 }

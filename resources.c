@@ -640,6 +640,8 @@ int removeduplicates(){
 //clean up game board (remove round stats)
 int clean(){
     validOrders = 0;
+    numO = 0;
+    numinc = 0;
     int k;
     for(k = 0;k < 48;k++) {
         g[k].dS = 0;

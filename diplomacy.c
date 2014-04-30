@@ -64,30 +64,6 @@ int gamewon() {
     return 0;
 }
 
-//waits for timer done or btn press 
-//TODO add btn press
-void timerwait() {
-    printf("start timer... ");
-    settmr(D_PHASE);
-    starttmr();  
-    while (checktmr() == 0) sleep(1);
-    printf("done!\r\n");
-}
-
-int waitloop(int waittime) {
-    printf("Starting timer now for %i seconds...\r\n",waittime);
-    int t = 0;
-    time(&stimer);
-    while(t < waittime) {
-         if (paused() != 0) menu();
-         //sleep(1);
-         time(&etimer);
-         t = (int) difftime(etimer, stimer);
-         //printf("timer at %i seconds.\r\n",t);
-    }
-    printf("timer complete after %i seconds.\r\n",t);
-return 0;
-}
 
 //for now mode - 0 equals random and 1 - user
 int getorders(int mode, int seed, int numorders, char file[]) {
@@ -100,22 +76,22 @@ int getorders(int mode, int seed, int numorders, char file[]) {
 
 //polling during waits for pause GPIO input
 int main() {
-	//testfunc();
 	//TODO START OF THE TEST ZONE TODO 
-	printf("Launching example game\r\n");
-    settmr(3);
-    starttmr();
-    fancystart();
-	examplegame();
+    logo();
+    //fancystart();
+	//examplegame();
+    printf("hit enter to continue");
+    char b[1];
+    scanf("%s",b);
+    clearboard();
     int i;
     for(i = 0;i < 48;i++) {
         writeregion(i);
         usleep(2);
     }
-    	//configurespi(); //setup cc1101 
-	//while(1) {
-//		sleep(5);
-//	}
+    	//runspi(); //TODO testing loop for SPI
+    demo(); 
+    while(1);
     //TODO END OF TEST ZONE TODO
     printf("Welcome to Diplomacy!\r\n");
     time(&timestart); //get start time
@@ -132,29 +108,22 @@ int main() {
             break;
     }
 
+    configurespi();
     while (gameRunning) {
-        demo(); 
-    	//runspi(); //TODO testing loop for SPI
-        while(1);
         printgame(); // debug print of game status
-        // ---- Start of Spring ----
         printf("--------- Start of year %i ----------\r\n\r\n",year);
         printf("--------- Spring %i --------- \r\n",year);
-        tx_phase_start(0, g);
-        waitloop(D_PHASE); //Start of Order & Diplomacy phase
-        //timerwait();
-        //numO = rx_orders_start(0);
-        numO = getorders(customorders,testseed,T_ORDERS,"/tmp/torders");
-        testseed+=5;
+        tx_phase_start(0); //starts timer and sends out region data
+        numO = rx_orders_start(0); 
+        //numO = getorders(customorders,testseed,T_ORDERS,"/tmp/torders");
+        //testseed+=5;
         arbitor();
         //starting retreat phase
         if (Rneeded) {
-            tx_phase_start(1, g);
+            tx_phase_start(1);
             Rneeded = 0;
             printf("Starting retreat phase for spring %i.\r\n",year);
-            waitloop(R_PHASE);
-            //timerwait();
-            //numO = rx_orders_start(1);
+            numO = rx_orders_start(1);
             numO = getorders(customorders,testseed,T_ORDERS,"/tmp/torders");
             testseed+=5;
             arbitor();
@@ -163,20 +132,16 @@ int main() {
         }
         // ---- Start of Fall ----
         printf("\r\n\r\n--------- Fall %i --------- \r\n",year);
-        tx_phase_start(0, g);
-        waitloop(D_PHASE);
-        //timerwait();
+        tx_phase_start(0);
             //numO = rx_orders_start(1);
         numO = getorders(customorders,testseed,T_ORDERS,"/tmp/torders");
         testseed+=5;
         arbitor();
         //starting retreat phase
         if (Rneeded) {
-            tx_phase_start(1, g);
+            tx_phase_start(1);
             Rneeded = 0;
             printf("Starting retreat phase for fall %i.\r\n",year);
-            waitloop(R_PHASE);
-            //timerwait();
             //numO = rx_orders_start(1);
             numO = getorders(customorders,testseed,T_ORDERS,"/tmp/torders");
             testseed++;
@@ -187,11 +152,9 @@ int main() {
         }
         Sneeded = supplycheck();
         if (Sneeded) {
-            tx_phase_start(2, g);
+            tx_phase_start(2);
             Sneeded = 0;
             printf("Starting supply phase for fall %i.\r\n",year);
-            waitloop(S_PHASE);
-            //timerwait();
             //numO = rx_orders_start(2);
             numO = getorders(customorders,testseed,T_ORDERS,"/tmp/torders");
             testseed++;

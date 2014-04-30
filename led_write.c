@@ -127,16 +127,44 @@ void fancystart() {
     int spread = 20;
     int density = 15;
     int i, j;
-    for(i = 0;i < 5;i++) {
+    for(i = 0;i < 10;i++) {
         int startloc = rand() % 285;
         for (j = 0;j < density;j++) {
             int plusminus = rand() % 2;
             if (plusminus == 0) plusminus = -1;
             int loc = (plusminus*(rand() % spread)) + startloc;
             if ((loc < 285)&&(loc >= 0)) writeled(loc, 1);
-            usleep(1);
+            writeout();
         }
+        initialize();
     }
+    printf("done!");
+}
+
+void logo() {
+    printf("You want a logo? fine.\r\n");
+    initialize();
+    int logo_d1[6] = {262, 260, 184, 240, 243, 257}; 
+    int logo_i1[3] = {204, 200, 245};
+    int logo_g[12] = {249, 251, 235, 207, 210, 212, 211, 216, 123, 118, 114, 131};
+    int logo_i2[4] = {99, 126, 226, 231}; 
+    int logo_d2[6] = {183, 185, 188, 165, 176, 153};
+    int logo_i3[3] = {142, 144, 170};
+    int logo_p[6] = {76, 83, 85, 72, 23, 26};
+    int logo_l[3] = {9, 79, 84};
+    int logo_o[4] = {44, 42, 35, 37};
+    //write logo
+    int i;
+    for(i = 0;i < 6;i++) writeled(logo_d1[i],1);
+    for(i = 0;i < 3;i++) writeled(logo_i1[i],1);
+    for(i = 0;i < 12;i++) writeled(logo_g[i],1);
+    for(i = 0;i < 4;i++) writeled(logo_i2[i],1);
+    for(i = 0;i < 6;i++) writeled(logo_d2[i],1);
+    for(i = 0;i < 3;i++) writeled(logo_i3[i],1);
+    for(i = 0;i < 6;i++) writeled(logo_p[i],1);
+    for(i = 0;i < 3;i++) writeled(logo_l[i],1);
+    for(i = 0;i < 4;i++) writeled(logo_o[i],1);
+    writeout();
 }
 
 void examplegame(){
