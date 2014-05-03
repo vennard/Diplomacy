@@ -273,6 +273,7 @@ int ackwait(int type, int messageid) {
 		            usleep(2500);
                     count++;
             	    ackcount[type]++;//Increment acknowledge count
+                    if (ackcount[type] > 0x7f) ackcount[type] = 0;
                 } else {
 		            clock_t now = clock();
 		            int telapsed = now - tstart;
@@ -304,7 +305,10 @@ int ackwait(int type, int messageid) {
                 }
             }
             printf("Found all 4 acknowledges!!! Continuing...\r\n");
-            for (i = 0;i < 4;i++) ackcount[i]++;
+            for (i = 0;i < 4;i++) {
+                ackcount[i]++;
+                if (ackcount[i] > 0x7f) ackcount[type] = 0;
+            }
             break;
         case 5:   //TODO remove global calls to ackcount & support 4 controllers
 	        while (count < 1) {
@@ -314,6 +318,7 @@ int ackwait(int type, int messageid) {
 		            printf("Saw end transmission byte!!!");
 		            count = 1;
             	    ackcount[0]++;//Increment acknowledge count
+                    if (ackcount[0] > 0x7f) ackcount[0] = 0;
 		            return 0;
                 // save order if valid request is recieved
                 } else if ((readingdata[2] == ackcount[0])&&(readingdata[1] == 0)) {
@@ -492,13 +497,21 @@ void testcontroller() {
     uint8_t rx[7];
      //1. Send Phase Type (Key & Data) 2 bytes
     printf("1. Sending phase type:\r\n");
-    tx[0] = 0xED; //sender addr
-    tx[1] = ackcount[0]; //using controller zero as sync ack 
-    tx[2] = 0x88; //phase type key
+    tx[0] = 0x6D; //sender addr
+    tx[1] = 0x02; //using controller zero as sync ack 
+    //tx[1] = ackcount[0]; //using controller zero as sync ack 
+    tx[2] = 0x08; //phase type key
     tx[3] = 0x01; //Phase type, 0 - order writing, 1 - locked, 2 - retreat/disband, 3 - gain/lose units
     tx[4] = 0x23; 
     tx[5] = 0x45;
     tx[6] = 0x67;
+
+    //tx[0] = 0x6D; //sender addr
+    //tx[1] = 0x01; //using controller zero as sync ack 
+    //tx[2] = 0x99; //phase type key
+    //tx[3] = 0x21; //Phase type, 0 - order writing, 1 - locked, 2 - retreat/disband, 3 - gain/lose units
+    //tx[4] = 0x69; 
+    //tx[5] = 0x45;
 
     int buf;
     for (i = 0; i < 7;i++) {
