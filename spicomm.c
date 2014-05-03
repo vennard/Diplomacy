@@ -26,7 +26,7 @@
 #include "include.h"
 
 //User Definitions
-#define TIMEOUT 5000  //in clock cycles 
+#define TIMEOUT 40000  //in clock cycles 
 //#define TIMEOUT 25000  //in clock cycles 
 
 /*
@@ -170,8 +170,9 @@
 static const char *device = "/dev/spidev0.0";
 static uint8_t mode;
 static uint8_t bits = 8;
+//static uint32_t speed = 900000;
 static uint32_t speed = 1000000;
-static uint16_t delay = 10;
+static uint16_t delay = 100;
 
 static void pabort(const char *s) {
   perror(s);
@@ -187,17 +188,22 @@ void rxdata(int len);
 //38 elements
 uint8_t config[38][2] = { 
     { _FSCTRL1, 0x08 },
+    //{ _FSCTRL1, 0x06 },
     { _FSCTRL0, 0x00 },
     { _FREQ2, 0x23   },
     { _FREQ1, 0x31   },
     { _FREQ0, 0x3B   },
-    { _MDMCFG4, 0xCA },
+    { _MDMCFG4, 0xCA }, //prolly needed on both
+    //{ _MDMCFG4, 0xF5 },
     { _MDMCFG3, 0x83 },
-    { _MDMCFG2, 0x93 },
-    { _MDMCFG1, 0x22 },
+    { _MDMCFG2, 0x93 }, //Enable digital DC blocking
+    //{ _MDMCFG2, 0x13 },
+    { _MDMCFG1, 0x22 }, //FEC_EN
+    //{ _MDMCFG1, 0xa2 },
     { _MDMCFG0, 0xF8 },
     { _CHANNR, 0x00  },
-    { _DEVIATN, 0x34 },
+    { _DEVIATN, 0x34 }, //expected frequency deviation -- not needed on both
+    //{ _DEVIATN, 0x31 },
     { _FREND1, 0x56  },
     { _FREND0, 0x10  },
     { _MCSM0, 0x18   },
@@ -205,11 +211,14 @@ uint8_t config[38][2] = {
     { _BSCFG, 0x6C   },  
     { _AGCCTRL2, 0x43 },
     { _AGCCTRL1, 0x40 },
-    { _FSCAL3, 0x91  }, 
-    { _FSCAL2, 0x29  }, 
-    { _FSCAL1, 0x2A  }, 
-    { _FSCAL0, 0x00  }, 
-    { _FSCAL0, 0x1F  }, 
+    { _FSCAL3, 0x91  },  //calibration stuff and chargepump
+    //{ _FSCAL3, 0xE9  }, 
+    { _FSCAL2, 0x29  },  //vco choices and calibration results
+    //{ _FSCAL2, 0x2A  }, 
+    { _FSCAL1, 0x2A  },  //coarse tuning
+    //{ _FSCAL1, 0x00  }, 
+    { _FSCAL0, 0x00  },  //calibration control
+    //{ _FSCAL0, 0x1F  }, 
     { _FSTEST, 0x59  }, 
     { _TEST2, 0x81   },
     { _TEST1, 0x35   },
@@ -217,8 +226,10 @@ uint8_t config[38][2] = {
     { _FIFOTHR, 0x47 },
     { _IOCFG2, 0x29  },
     { _IOCFG0, 0x06  },
-    { _PKTCTRL1, 0x0c},
+    //{ _PKTCTRL1, 0x0c},
+    { _PKTCTRL1, 0x04},
     { _PKTCTRL0, 0x04},
+    //{ _PKTCTRL0, 0x05},
     { _ADDR, 0x00    },
     { _PKTLEN, 0x07  },
     { _WORCTRL, 0xFB },
@@ -252,6 +263,7 @@ int ackwait(int type, int messageid) {
         case 2:
         case 3: 
             while (count < 1) {
+                    //printf("time elapsed!\r\n");
                 rxdata(7); //read 2 byte acknowledge
                 if ((readingdata[2] == 0xAC)&&(readingdata[1] == type)&&(readingdata[3] == messageid)) {
 		            changemode(0);
@@ -264,6 +276,7 @@ int ackwait(int type, int messageid) {
                 } else {
 		            clock_t now = clock();
 		            int telapsed = now - tstart;
+                    //printf("time elapsed!\r\n");
 		            if ((telapsed < 0)||(telapsed > TIMEOUT)) return 1; 
                 }
             }
@@ -350,7 +363,7 @@ void rxdata(int len) {
 		uint8_t gdo2 = pck & 0x04; //gdo2 configured to hold CRC check result
 		tx[0] = _RXBYTES | 0x80;
     	uint8_t result = send(2, tx);
-		result = result & 0x7f;
+		//result = result & 0x7f;
 		if ((gdo2 == 0x04)&&(result > 6)) { //CRC check ok
     	    changemode(2); //put in rx 
     	    if (len < 1) exit(1);
@@ -366,6 +379,7 @@ void rxdata(int len) {
     		};
     		ret = ioctl(fd, SPI_IOC_MESSAGE(1), &fr);
     		if (ret < 1) pabort("can't send spi message");
+     //       usleep(2500);
     		//printf("RX: ");
     		//for (i = 0;i < len+1;i++) printf("0x%x ",readingdata[i]);
     		//printf("\r\n");
@@ -387,8 +401,12 @@ void txdata(int acktype, uint8_t *in) {
     uint8_t tx[8]; 
     uint8_t rx[8]; 
     for (i = 1;i < 8;i++) tx[i] = in[i];
+    for(i = 0;i < 63;i++) readingdata[i] = 0; //clear local buffer
     numinc = 0;
     while (ackd == 0) {
+        tx[0] = _SFRX;
+        changemode(0);
+        send(1,tx);
     	tx[0] = TX_BURST;
 	    if (acktype == 5) tx[2] = ackcount[tx[3]]; //increment ack call for rxorders phase 
         changemode(1); //put in tx mode
@@ -435,8 +453,82 @@ uint8_t send(int len, uint8_t *in) {
     };
     ret = ioctl(fd, SPI_IOC_MESSAGE(1), &fr);
     if (ret < 1) pabort("can't send spi message");
+    //printf("RX from send = 0x%x 0x%x\r\n",rx[0],rx[1]);
     return rx[len-1];  
 } 
+
+//changes endianness for byte
+uint8_t bitswiz(uint8_t in) {
+    uint8_t temp[8];
+    int i;
+    temp[0] = (in & 0x01);
+    temp[0] = temp[0] << 7; 
+    temp[1] = (in & 0x02);
+    temp[1] = temp[1] << 5;
+    temp[2] = (in & 0x04);
+    temp[2] = temp[2] << 3;
+    temp[3] = (in & 0x08);
+    temp[3] = temp[3] << 1;
+    temp[4] = (in & 0x10);
+    temp[4] = temp[4] >> 1;
+    temp[5] = (in & 0x20);
+    temp[5] = temp[5] >> 3;
+    temp[6] = (in & 0x40);
+    temp[6] = temp[6] >> 5;
+    temp[7] = (in & 0x80);
+    temp[7] = temp[7] >> 7;
+    uint8_t out = temp[0] | temp[1] | temp[2] | temp[3] | temp[4] | temp[5] | temp[6] | temp[7];
+    out = out >> 1;
+    out = out & 0x7f;
+    return out;
+}
+
+void testcontroller() {
+    fd = open(device, O_RDWR);
+    if (fd < 0) pabort("can't open device");
+    printf("Launching test program\r\n");
+    int i, ret;
+    uint8_t tx[7];
+    uint8_t rx[7];
+     //1. Send Phase Type (Key & Data) 2 bytes
+    printf("1. Sending phase type:\r\n");
+    tx[0] = 0xED; //sender addr
+    tx[1] = ackcount[0]; //using controller zero as sync ack 
+    tx[2] = 0x88; //phase type key
+    tx[3] = 0x01; //Phase type, 0 - order writing, 1 - locked, 2 - retreat/disband, 3 - gain/lose units
+    tx[4] = 0x23; 
+    tx[5] = 0x45;
+    tx[6] = 0x67;
+
+    int buf;
+    for (i = 0; i < 7;i++) {
+        printf("ready to send 0x%x!\r\n",tx[i]);
+        buf = getchar();
+        //sleep(5);
+        uint8_t ttx = tx[i];
+        struct spi_ioc_transfer fr = {
+            .tx_buf = (unsigned long) &ttx,
+            .rx_buf = (unsigned long) rx,
+            .len = 1,
+            .delay_usecs = delay,
+            .speed_hz = speed,
+            .bits_per_word = bits,
+        };
+        ret = ioctl(fd, SPI_IOC_MESSAGE(1), &fr);
+        if (ret < 1) pabort("can't send spi message");
+        uint8_t out = bitswiz(rx[0]);
+        printf("got back 0x%x!\r\n",out);
+        if ((out == 0x55)||(out == 0x54)) {
+            printf("success!\r\n");
+        } else {
+           // i--;
+            sleep(1);
+            printf("Found invalid response, resending byte!\r\n");
+        }
+    }
+    //check response to make sure controller is in the correct state
+    printf("Done with testing loop!\r\n");
+}
 
 //Write all data necessary to configure the CC1101
 void configurespi() {
@@ -444,7 +536,6 @@ void configurespi() {
     int i;
     uint8_t tx[2];
     uint8_t check;
-
     fd = open(device, O_RDWR);
     if (fd < 0) pabort("can't open device");
     setupspi();
@@ -806,7 +897,6 @@ void demo(void) {
     arbitor();
 }
 
-/*
 void runspi(void) {
     printf("Called runspi!\r\n"); 
     configurespi();
@@ -921,4 +1011,3 @@ void runspi(void) {
    }
 }
 
- */    

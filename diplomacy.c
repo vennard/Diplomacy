@@ -77,9 +77,13 @@ int getorders(int mode, int seed, int numorders, char file[]) {
 //polling during waits for pause GPIO input
 int main() {
 	//TODO START OF THE TEST ZONE TODO 
-    logo();
+    //runspi();
+    //demo();
+    //logo();
     //fancystart();
+    testcontroller();
 	//examplegame();
+    while(1);
     printf("hit enter to continue");
     char b[1];
     scanf("%s",b);

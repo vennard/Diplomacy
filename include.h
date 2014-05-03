@@ -24,6 +24,7 @@ void tx_phase_start(int phasetype);
 int rx_orders_start(int roundtype);
 void configurespi(void);
 void demo(void);
+void testcontroller(void);
 
 //calls for led control
 void examplegame(void);
