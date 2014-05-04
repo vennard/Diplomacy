@@ -396,6 +396,24 @@ void rxdata(int len) {
     } 
 }
 
+void rxd() {
+
+}
+
+//uses 4th controller as sending device
+void txd(int acktype, uint8_t *in) {
+    int i, ret;
+    int ackd = 0;
+    uint8_t tx[8]; 
+    uint8_t rx[8]; 
+    for (i = 1;i < 8;i++) tx[i] = in[i];
+    for(i = 0;i < 63;i++) readingdata[i] = 0; //clear local buffer
+    while (ackd == 0) {
+
+    }
+}
+
+
 //transfers data via radio
 //default is 7 byte transfer burst (Not including header for spi)
 //acktype is needed acknowledge address (4 for all) 5 for request data mode
@@ -486,6 +504,11 @@ uint8_t bitswiz(uint8_t in) {
     out = out >> 1;
     out = out & 0x7f;
     return out;
+}
+
+void setupspi() {
+    fd = open(device, O_RDWR);
+    if (fd < 0) pabort("can't open device");
 }
 
 void testcontroller() {

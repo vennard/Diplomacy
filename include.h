@@ -25,6 +25,9 @@ int rx_orders_start(int roundtype);
 void configurespi(void);
 void demo(void);
 void testcontroller(void);
+void setupspi(void);
+void txd(int acktype, uint8_t *in);
+void rxd(void);
 
 //calls for led control
 void examplegame(void);
