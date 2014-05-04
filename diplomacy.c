@@ -78,10 +78,10 @@ int getorders(int mode, int seed, int numorders, char file[]) {
 int main() {
 	//TODO START OF THE TEST ZONE TODO 
     //runspi();
-    //demo();
+    demo();
     //logo();
     //fancystart();
-    testcontroller();
+    //testcontroller();
 	//examplegame();
     while(1);
     printf("hit enter to continue");
