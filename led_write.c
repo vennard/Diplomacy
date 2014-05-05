@@ -531,6 +531,7 @@ void writeregion(int region) {
                     break;
                 }
             }
+            break;
         case 8: //nar
             if (g[region].occupy_type != 2) {
                 if (g[region].occupy_type == 0) writeled(59,1);
@@ -671,18 +672,18 @@ void writeregion(int region) {
                 if (g[region].occupy_type == 1) writeled(77,1);
                 switch (g[region].player) {
                     case 0: //white
-                        writeled(70,1);
-                        writeled(71,1);
-                        writeled(72,1);
+                        writeled(74,1);
+                        writeled(75,1);
+                        writeled(76,1);
                         break;
                     case 1: //red
-                        writeled(70,1);
+                        writeled(74,1);
                         break;
                     case 2: //blue
-                        writeled(72,1);
+                        writeled(76,1);
                         break;
                     case 3: //green
-                        writeled(71,1);
+                        writeled(75,1);
                     break;
                     default:
                     break;
@@ -1379,7 +1380,7 @@ void writeregion(int region) {
                         writeled(210,1);
                         break;
                     case 3: //green
-                        writeled(211,1);
+                        writeled(209,1);
                     break;
                     default:
                     break;
@@ -2110,6 +2111,7 @@ void writeregion2(int region) {
                     break;
                 }
             }
+            break;
         case 8: //nar
             if (g[region].occupy_type != 2) {
                 if (g[region].occupy_type == 0) writeled(59,1);
@@ -2268,21 +2270,21 @@ void writeregion2(int region) {
                 if (g[region].occupy_type == 1) writeled(77,1);
                 switch (g[region].player) {
                     case 0: //white
-                        writeled(70,1);
-                        writeled(71,1);
-                        writeled(72,1);
+                        writeled(74,1);
+                        writeled(75,1);
+                        writeled(76,1);
                         break;
                     case 1: //red
-                        writeled(70,1);
-                        writeled(71,1);
+                        writeled(74,1);
+                        writeled(75,1);
                         break;
                     case 2: //blue
-                        writeled(72,1);
-                        writeled(70,1);
+                        writeled(76,1);
+                        writeled(74,1);
                         break;
                     case 3: //green
-                        writeled(71,1);
-                        writeled(72,1);
+                        writeled(75,1);
+                        writeled(76,1);
                     break;
                     default:
                     break;
@@ -3067,14 +3069,14 @@ void writeregion2(int region) {
                         break;
                     case 1: //red
                         writeled(208,1);
-                        writeled(211,1);
+                        writeled(209,1);
                         break;
                     case 2: //blue
                         writeled(210,1);
                         writeled(208,1);
                         break;
                     case 3: //green
-                        writeled(211,1);
+                        writeled(209,1);
                         writeled(210,1);
                     break;
                     default:

@@ -32,7 +32,7 @@ int arbitor() {
 
     execute();
     initialize();
-    for(i = 0;i < 48;i++) writeregion2(i); //write out to gameboard
+    for(i = 0;i < 48;i++) writeregion(i); //write out to gameboard
     writeout();
     printgame();
     clean();

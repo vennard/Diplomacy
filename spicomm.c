@@ -265,11 +265,10 @@ int ackwait(int type, int messageid) {
         case 2:
         case 3: 
             while (count < 1) {
-                    //printf("time elapsed!\r\n");
                 rxd(); //read 2 byte acknowledge
                 if ((readingdata[1] == 0x2C)&&(readingdata[0] == type)&&(readingdata[2] == messageid)) {
                     printf("Found successful ack!\r\n");
-		            usleep(2500);
+		            //usleep(2500);
                     count++;
             	    ackcount[type]++;//Increment acknowledge count
                     if (ackcount[type] > 0x7f) ackcount[type] = 0;
@@ -277,8 +276,7 @@ int ackwait(int type, int messageid) {
                 } else {
 		            clock_t now = clock();
 		            int telapsed = now - tstart;
-                    printf("time elapsed - %i!\r\n",telapsed);
-		            if ((telapsed < 0)||(telapsed > TIMEOUT)) return 1; 
+		            if ((telapsed <= 0)||(telapsed > TIMEOUT)) return 1; 
                 }
             }
             break;
@@ -327,7 +325,7 @@ int ackwait(int type, int messageid) {
                 // save order if valid request is recieved
                 } else if ((readingdata[1] == ackcount[0])&&(readingdata[0] == 0)) {
                     printf("Got valid order! saving off\r\n");
-		            usleep(2500);
+		            //usleep(2500);
 		            //changemode(0); 
 		            //uint8_t clearbuf = _SFRX;
 		            //send(1, &clearbuf);
@@ -406,8 +404,9 @@ void rxd() {
     int i, ret;
     uint8_t tx = 0x01;
     uint8_t in;
+    printf("\r\n");
     for(i = 0;i < 7;i++) {
-        usleep(25000);
+        usleep(2500);
         struct spi_ioc_transfer fr = {
        		.tx_buf = (unsigned long) &tx,
         	.rx_buf = (unsigned long) &in,
@@ -421,19 +420,20 @@ void rxd() {
         uint8_t out = bitswiz(in);
         readingdata[i] = out; //save off data
         if (out == 0x3B) {
-            printf("RX in wrong mode!\r\n");
+            printf(".");
             //sleep(2);
             //usleep(2500);
-            usleep(55000);
+            usleep(25000);
             i--;
         }
         //printf("RX: 0x%x \r\n",out);
         //printf("hit enter to continue ");
         //int x = getchar();
     }
-    printf("RX: ");
-    for (i = 0;i < 7;i++) printf("0x%x ", readingdata[i]);
-    printf(" received... \r\n");
+    printf("\r\n");
+    //printf("RX: ");
+    //for (i = 0;i < 7;i++) printf("0x%x ", readingdata[i]);
+    //printf(" received... \r\n");
 }
 
 //uses 4th controller as sending device
@@ -442,18 +442,18 @@ void txd(int acktype, uint8_t *in) {
     int ackd = 0;
     uint8_t tx[7]; 
     uint8_t rx[7]; 
-    printf("Sending TX: ");
+    //printf("Sending TX: ");
     for (i = 0;i < 7;i++) {
         tx[i] = in[i]; //sending 7 bytes
-        printf("0x%x ",tx[i]);
+      //  printf("0x%x ",tx[i]);
     }
-    printf("\r\n");
+    //printf("\r\n");
     while (ackd == 0) {
         for(i = 0;i < 63;i++) readingdata[i] = 0; //clear local buffer
 	    if (acktype == 5) tx[1] = ackcount[tx[2]]; //increment ack call for rxorders phase 
         //Send 8 bytes out via spi
         for (i = 0; i < 7;i++) {
-            printf("ready to send 0x%x!\r\n",tx[i]);
+     //       printf("ready to send 0x%x!\r\n",tx[i]);
             uint8_t ttx = tx[i];
             struct spi_ioc_transfer fr = {
                 .tx_buf = (unsigned long) &ttx,
@@ -466,27 +466,23 @@ void txd(int acktype, uint8_t *in) {
             ret = ioctl(fd, SPI_IOC_MESSAGE(1), &fr);
             if (ret < 1) pabort("can't send spi message");
             uint8_t out = bitswiz(rx[0]);
-            printf("got back 0x%x!\r\n",out);
+      //      printf("got back 0x%x!\r\n",out);
             if ((out == 0x55)||(out == 0x54)) {
-                printf("success!\r\n");
+           //     printf("success!\r\n");
                 usleep(10);
             } else {
                 i--;
-                //usleep(10000); //may need to change
-                //sleep(2);
-                usleep(25000);
-                printf("Found invalid response, resending byte!\r\n");
+                //usleep(25000);
+            //    printf("Found invalid response, resending byte!\r\n");
             }
-        //printf("hit enter to continue ");
-        //int x = getchar();
         }
         printf("Sent 7 bytes successfully! Now waiting for ack\r\n");
         if (ackwait(acktype, tx[1]) == 1) {
             printf("ERROR! Timed out, resending!\r\n");
         } else {
-            printf("SUCCESS! TX Data: ");
-            for (i = 0;i < 7;i++) printf("0x%x ",tx[i]);
-            printf(" sent and acknowledged.\r\n");
+        //    printf("SUCCESS! TX Data: ");
+         //   for (i = 0;i < 7;i++) printf("0x%x ",tx[i]);
+          //  printf(" sent and acknowledged.\r\n");
             ackd = 1;
         }
     }
@@ -1066,6 +1062,7 @@ void runspi(void) {
         //txdata(4, tx);
         txd(0, tx);
 
+        printf("Starting polling!\r\n");
         //4. Start Polling to get orders from controllers
         for (i = 0;i < 1;i++) {
         //for (i = 0;i < 3;i++) {
@@ -1082,13 +1079,15 @@ void runspi(void) {
             numO = numinc;
             arbitor();
 
-            printf("Done with arbitor!\r\n");
 
         }
 
         //clear acknowledge counts
         for (i = 0;i < 4;i++) ackcount[i] = 0;
         printf("End of Transmission!!!\r\n");
+        clean();
+        //printf("Done with arbitor - hit enter to continue!\r\n");
+        //x = getchar();
    }
 }
 

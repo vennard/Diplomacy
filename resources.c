@@ -197,7 +197,7 @@ int firstvalidate(void) {
        int or = o[i].order;
     //    printf("ORDER %i: player - %i, type - %i, order - %i, country - %i, tcountry - %i, scountry - %i\r\n",i,p,t,or,c,tc,sc);
         if (o[i].valid == -1) continue; //marked as invalid duplicate 
-       if (g[c].player != p) continue; //Player doesn't match 
+        if (g[c].player != p) continue; //Player doesn't match 
         if (g[c].occupy_type == 2) continue; //Region doesn't have unit
         switch (or) {
             case 0 : //hold
@@ -262,8 +262,8 @@ int firstvalidate(void) {
                 if ((t == 1)&&(g[sc].type == 0)) continue;
                 if (g[sc].occupy_type == 2) continue; 
                 if (!isneighbor(sc,g[c].ncountrys)) continue; 
-                if (tc == -1) { //supporting a hold, convoy, or support
-                   printf("#%i support hold | ",i);
+                if (tc == sc) { //supporting a hold, convoy, or support
+                    printf("#%i support hold | ",i);
                     o[i].valid = 1;
                     validOrders++;
                     continue;
@@ -279,7 +279,7 @@ int firstvalidate(void) {
                         }
                         if (chk == 0) continue;
                     }
-                   printf("#%i support move | ",i);
+                    printf("#%i support move | ",i);
                     o[i].valid = 1;
                     validOrders++;
                     continue;
@@ -423,6 +423,13 @@ int validate(int type) {
                 for (j = 0;j < count;j++) {
                     ro = o[vo[j]];     
                     if (j == k) continue;
+                    //check that the target country is free or will be free
+                    if ((ro.order == 1)&&(ro.country == tc)) {
+                        //now reorder found order to be executed first
+                        order_t temp = o[vo[j]];
+                        o[vo[j]] = o[vo[k]];
+                        o[vo[k]] = temp;
+                    }
                     //invalidate if found move order with >= strength moving to same country
                     if ((ro.order == 1)&&(ro.tcountry==tc)&&(g[ro.country].aS == a)) check = -1;
                     if ((ro.order == 1)&&(ro.tcountry==tc)&&(g[ro.country].aS > a)) check = 0;
@@ -518,7 +525,6 @@ int validate(int type) {
                         ro = o[vo[j]];     
                         a = g[ro.country].aS;
                         if ((ro.type == 1)&&(a > d)) { //found greater move
-                            printf("\r\n\r\nFOUND: ro.country - %i, a - %i, d - %i\r\n");
                             check = -1;
                             temp = ro.country;
                         }

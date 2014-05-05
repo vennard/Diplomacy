@@ -120,7 +120,7 @@ int main() {
 	//examplegame();
     int i;
     for(i = 0;i < 48;i++) {
-        writeregion2(i);
+        writeregion(i);
         usleep(2);
     }
     writeout();
