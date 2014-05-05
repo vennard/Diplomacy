@@ -407,6 +407,7 @@ void rxd() {
     uint8_t tx = 0x01;
     uint8_t in;
     for(i = 0;i < 7;i++) {
+        usleep(25000);
         struct spi_ioc_transfer fr = {
        		.tx_buf = (unsigned long) &tx,
         	.rx_buf = (unsigned long) &in,
@@ -423,7 +424,7 @@ void rxd() {
             printf("RX in wrong mode!\r\n");
             //sleep(2);
             //usleep(2500);
-            usleep(25000);
+            usleep(55000);
             i--;
         }
         //printf("RX: 0x%x \r\n",out);
@@ -1029,13 +1030,13 @@ void runspi(void) {
         //txdata(4, tx); //TODO needs this
         txd(0, tx);
 	
-        printf("hit enter to continue ");
-        int x = getchar();
+       // printf("hit enter to continue ");
 
         //2. Send region data 0 -> 47 (Owner & Unit_type) 2 bytes
         int i;
         printf("2. Sending region data:\r\n");
         for (i = 0;i < 48;i++) {
+            //usleep(8000); //TODO hopefully get to remove
             tx[0] = 0x6D;
             tx[1] = ackcount[0]; //TODO using controller 0 as master -- maybe take mean here or diff?
             tx[2] = (uint8_t)g[i].player;
@@ -1048,14 +1049,13 @@ void runspi(void) {
             //x = getchar();
             txd(0, tx);
             //txdata(4, tx);
-            usleep(2500); //TODO hopefully get to remove
         } 
 
         printf("hit enter to continue to lock sig");
+        int x = getchar();
         x = getchar();
 
         //3. Wait for turn_up || btn_press --> send 0xBF ack
-        //sleep(10); //TODO need to replace with game state wait
         tx[0] = 0x6D;
         tx[1] = ackcount[0]; //TODO using controller 0 as master -- maybe take mean here or diff?
         tx[2] = 0x3F; //round end signal
@@ -1069,7 +1069,6 @@ void runspi(void) {
         //4. Start Polling to get orders from controllers
         for (i = 0;i < 1;i++) {
         //for (i = 0;i < 3;i++) {
-            //Send out player ID
             tx[0] = 0x6D;
             tx[1] = ackcount[i]; //splits to send seperate acknowledge count
             tx[2] = (uint8_t) i; //player id
@@ -1077,25 +1076,18 @@ void runspi(void) {
             tx[4] = 0x00; 
             tx[5] = 0x00;
             tx[6] = 0x00;
-            //txd(i, tx);
-            //printf("hit enter to continue send polling signal");
-            //x = getchar();
             txd(5, tx); //get order data back
 
         //8. Send order data to arbitrator
             numO = numinc;
             arbitor();
 
-            printf("should have sent everything to arbitor!\r\n");
-            x = getchar();
+            printf("Done with arbitor!\r\n");
 
         }
 
         //clear acknowledge counts
-        //for (i = 0;i < 4;i++) ackcount[i] = 0;
-        printf("Done getting order data... launching arbirator\r\n");
-        //TODO add call to arbitrator passing it inputorders[][]
-        sleep(5);
+        for (i = 0;i < 4;i++) ackcount[i] = 0;
         printf("End of Transmission!!!\r\n");
    }
 }

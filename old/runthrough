@@ -1,0 +1,27 @@
+#!/bin/bash
+
+cat /sys/kernel/ece453_digidiplo/ready
+echo clearing board
+echo 0 > /sys/kernel/ece453_digidiplo/datasize
+echo 0x80000000 > /sys/kernel/ece453_digidiplo/data
+echo 1 > /sys/kernel/ece453_digidiplo/shift
+echo 1 > /sys/kernel/ece453_digidiplo/display
+echo 0x00000000 > /sys/kernel/ece453_digidiplo/data
+#cc=0
+# while [ $cc -lt 300 ]; do
+	count=0
+	while [ $count -lt 306 ]; do
+        read stuff
+		echo 1 > /sys/kernel/ece453_digidiplo/shift
+		echo 1 > /sys/kernel/ece453_digidiplo/display
+		let count=count+1
+        echo $count
+	done
+#echo 0x80000000 > /sys/kernel/ece453_digidiplo/data
+#echo next one
+#let cc=cc+1
+#done
+
+echo done with loop
+	
+

@@ -384,21 +384,21 @@ void writeregion(int region) {
             break;
         case 4: //min
             if (g[region].occupy_type != 2) {
-                writeled(42,1);
+                writeled(35,1);
                 switch (g[region].player) {
                     case 0: //white
-                        writeled(15,1);
-                        writeled(46,1);
-                        writeled(47,1);
+                        writeled(36,1);
+                        writeled(37,1);
+                        writeled(38,1);
                         break;
                     case 1: //red
-                        writeled(15,1);
+                        writeled(38,1);
                         break;
                     case 2: //blue
-                        writeled(46,1);
+                        writeled(36,1);
                         break;
                     case 3: //green
-                        writeled(47,1);
+                        writeled(37,1);
                     break;
                     default:
                     break;
@@ -406,18 +406,18 @@ void writeregion(int region) {
             }
             switch (g[region].supply) {
                 case 0: //white
-                    writeled(43,1);
-                    writeled(44,1);
-                    writeled(45,1);
+                    writeled(39,1);
+                    writeled(40,1);
+                    writeled(41,1);
                     break;
                 case 1: //red
-                    writeled(45,1);
+                    writeled(41,1);
                     break;
                 case 2: //blue
-                    writeled(43,1);
+                    writeled(39,1);
                     break;
                 case 3: //green
-                    writeled(44,1);
+                    writeled(40,1);
                     break;
                 default:
                     break;
@@ -1942,24 +1942,24 @@ void writeregion2(int region) {
             break;
         case 4: //min
             if (g[region].occupy_type != 2) {
-                writeled(42,1);
+                writeled(35,1);
                 switch (g[region].player) {
                     case 0: //white
-                        writeled(15,1);
-                        writeled(46,1);
-                        writeled(47,1);
+                        writeled(36,1);
+                        writeled(37,1);
+                        writeled(38,1);
                         break;
                     case 1: //red
-                        writeled(15,1);
-                        writeled(47,1);
+                        writeled(38,1);
+                        writeled(37,1);
                         break;
                     case 2: //blue
-                        writeled(46,1);
-                        writeled(15,1);
+                        writeled(36,1);
+                        writeled(38,1);
                         break;
                     case 3: //green
-                        writeled(47,1);
-                        writeled(46,1);
+                        writeled(37,1);
+                        writeled(39,1);
                     break;
                     default:
                     break;
@@ -1967,21 +1967,21 @@ void writeregion2(int region) {
             }
             switch (g[region].supply) {
                 case 0: //white
-                    writeled(43,1);
-                    writeled(44,1);
-                    writeled(45,1);
+                    writeled(39,1);
+                    writeled(40,1);
+                    writeled(41,1);
                     break;
                 case 1: //red
-                    writeled(45,1);
-                    writeled(44,1);
+                    writeled(41,1);
+                    writeled(40,1);
                     break;
                 case 2: //blue
-                    writeled(43,1);
-                    writeled(45,1);
+                    writeled(39,1);
+                    writeled(41,1);
                     break;
                 case 3: //green
-                    writeled(44,1);
-                    writeled(43,1);
+                    writeled(40,1);
+                    writeled(39,1);
                     break;
                 default:
                     break;

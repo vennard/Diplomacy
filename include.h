@@ -38,6 +38,7 @@ void logo(void);
 void clearboard(void);
 void writeout(void);
 void blink(void);
+void initialize(void);
 
 //calls for timer control
 void settmr(int min);

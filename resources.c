@@ -194,7 +194,7 @@ int firstvalidate(void) {
        int t = o[i].type;
        int tc = o[i].tcountry;
        int sc = o[i].scountry;
-        int or = o[i].order;
+       int or = o[i].order;
     //    printf("ORDER %i: player - %i, type - %i, order - %i, country - %i, tcountry - %i, scountry - %i\r\n",i,p,t,or,c,tc,sc);
         if (o[i].valid == -1) continue; //marked as invalid duplicate 
        if (g[c].player != p) continue; //Player doesn't match 
@@ -289,8 +289,8 @@ int firstvalidate(void) {
                 if (g[c].occupy_type == 0) { //army convoy order
                     if (g[c].type != 1) continue; //region must be coastal
                     //land unit must be neighbor of fleet & a fleet must exist TODO double check this rule
-                    //if ((!isneighbor(c, g[sc].ncountrys))||(g[sc].occupy_type != 1)) continue; 
-                    if (sc != -1) continue;
+                    if ((!isneighbor(c, g[sc].ncountrys))||(g[sc].occupy_type == 0)) continue; 
+                    //if (sc != -1) continue;
                     //check path for valid fleets to target country
                     if (checkconvoy(c,tc,g[c].ncountrys,-1) != 1) continue;
                    printf("#%i troop convoy | ",i);
@@ -355,8 +355,8 @@ int execute() {
                     printf(" SUPPORT P%i U%i C%i +> (SC%i -> TC%i) |",co.player,co.type,co.country,co.scountry,co.tcountry);
                     break;
                 case 3 :
-                    printf(" CONVOY P%i U%i C%i +> (SC%i -> TC%i) |",co.player,co.type,co.country,co.scountry,co.tcountry);
                     if (co.type == 0) { //troop convoy order
+                        printf(" CONVOY P%i U%i C%i +> (SC%i -> TC%i) |",co.player,co.type,co.country,co.scountry,co.tcountry);
                         moveunit(co.country,co.tcountry);
                     }
                     break;
@@ -518,6 +518,7 @@ int validate(int type) {
                         ro = o[vo[j]];     
                         a = g[ro.country].aS;
                         if ((ro.type == 1)&&(a > d)) { //found greater move
+                            printf("\r\n\r\nFOUND: ro.country - %i, a - %i, d - %i\r\n");
                             check = -1;
                             temp = ro.country;
                         }
