@@ -32,6 +32,7 @@ void examplegame(void);
 void writeled(int val, int lednum);
 void writeout(void);
 void writeregion(int region);
+void writeregion2(int region);
 void fancystart(void);
 void logo(void);
 void clearboard(void);
