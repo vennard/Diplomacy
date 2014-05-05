@@ -35,6 +35,8 @@ void writeregion(int region);
 void fancystart(void);
 void logo(void);
 void clearboard(void);
+void writeout(void);
+void blink(void);
 
 //calls for timer control
 void settmr(int min);

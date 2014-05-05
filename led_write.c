@@ -29,8 +29,12 @@
 
 uint8_t read_reg(int fd); 
 int leds[300];
+void readywait();
+void shiftin(int val); 
+void initialize();
 
 int write_reg(const char* file, int val) {
+    readywait();
     FILE *fp;
     fp = fopen(file, "w");
     if (fp == NULL) perror("failed to open file");
@@ -59,10 +63,65 @@ char checktmr() {
     return in;
 }
 
+void clearboard() {
+    int i;
+    write_reg(DATA_FILE, 0);
+    usleep(10);
+    write_reg(DATASIZE_FILE, 0);
+    usleep(10);
+    for(i = 0;i < 295;i++){
+        write_reg(SHIFT_FILE,1);
+        write_reg(DISPLAY_FILE,1);
+    }
+    printf("should have clear the board!");
+    initialize();
+}
+
+//pushes data in leds out to the board
+void writeout2() {
+    int i;
+    int c = 0;
+    //write_reg(DATASIZE_FILE, 31);
+    int out = 0;
+    /*
+    for (i = 0;i < 32;i++) {
+        if(leds[32 - c] == 1) {
+            out = out | 0x00000001; //set bit 0 to 1
+        } else {
+            out = out & 0xfffffffe; //set bit 0 to 0
+        }
+        out = out << 1; //shift over one bit
+    }
+    */
+    out = 0x80000001;
+    printf("Value to write out 0x%x!\r\n",out);
+    write_reg(DATA_FILE,out);
+    write_reg(SHIFT_FILE,1);
+    write_reg(DISPLAY_FILE, 1);
+}
+
+void writeout() {
+    int i;
+    for(i = 0;i < 285;i++) shiftin(leds[284-i]);
+    write_reg(DISPLAY_FILE, 0x1);
+}
+
+
+void blink() {
+    clearboard();
+    int i; 
+    for (i = 0;i < 10;i++) {
+        writeled(0, 1);
+        writeout();
+        usleep(100);
+    }
+}
+
 //populate led data with zeros
 void initialize(){
     int i;
-    for(i = 0;i < 294;i++) leds[i] = 0x00;
+    write_reg(DATASIZE_FILE, 0);
+    for(i = 0;i < 294;i++) writeled(i,0);
     printf("turned all leds off.\r\n");
 }
 
@@ -76,20 +135,18 @@ void writeled(int lednum, int val) {
 //waits until sees ready in ready_file
 void readywait() {
     FILE *fp;
-    printf("Waiting to write until system is ready... ");
     char rdy = 0x00;
     fp = fopen(READY_FILE, "r");
     while (rdy != 0x01) {
         if (fp == NULL) perror("failed to read from ready_file\n");
         rdy = fgetc(fp);
-        printf("got: %x\n",rdy);
         rdy = rdy & 0x01;
+        //printf("ready %x\r\n",rdy);
     }
     fclose(fp);
 }
 
 void shiftin(int val) {
-    write_reg(DATASIZE_FILE, 0);
     switch(val) {
         case 0: 
             write_reg(DATA_FILE, 0x00000000);
@@ -105,22 +162,10 @@ void shiftin(int val) {
     }
 }
 
-//pushes data in leds out to the board
-void writeout() {
-    int i;
-    for(i = 0;i < 285;i++) {
-        shiftin(leds[284-i]);
-    }
-    write_reg(DISPLAY_FILE, 0x1);
-}
 
-void clearboard() {
-    printf("trying to clear board!");
-    initialize();
-    writeout();
-}
 
 void fancystart() {
+    clearboard();
     printf("oh fancy\r\n");
     srand(time(NULL));
     initialize();
@@ -139,11 +184,15 @@ void fancystart() {
         initialize();
     }
     printf("done!");
+    initialize();
+    writeout();
 }
 
 void logo() {
     printf("You want a logo? fine.\r\n");
     initialize();
+    clearboard();
+    usleep(10);
     int logo_d1[6] = {262, 260, 184, 240, 243, 257}; 
     int logo_i1[3] = {204, 200, 245};
     int logo_g[12] = {249, 251, 235, 207, 210, 212, 211, 216, 123, 118, 114, 131};
@@ -156,13 +205,21 @@ void logo() {
     //write logo
     int i;
     for(i = 0;i < 6;i++) writeled(logo_d1[i],1);
+    writeout();
     for(i = 0;i < 3;i++) writeled(logo_i1[i],1);
+    writeout();
     for(i = 0;i < 12;i++) writeled(logo_g[i],1);
+    writeout();
     for(i = 0;i < 4;i++) writeled(logo_i2[i],1);
+    writeout();
     for(i = 0;i < 6;i++) writeled(logo_d2[i],1);
+    writeout();
     for(i = 0;i < 3;i++) writeled(logo_i3[i],1);
+    writeout();
     for(i = 0;i < 6;i++) writeled(logo_p[i],1);
+    writeout();
     for(i = 0;i < 3;i++) writeled(logo_l[i],1);
+    writeout();
     for(i = 0;i < 4;i++) writeled(logo_o[i],1);
     writeout();
 }
@@ -179,15 +236,16 @@ void examplegame(){
 	for(i = 0;i < 306;i++) {
 		writeled(i, 1);	
 		writeout();
-		usleep(1);
+		//usleep(1);
 	}
 	for(i = 0;i < 306;i++) {
 		writeled(i, 0);	
 		writeout();
-		usleep(1);
+		//usleep(1);
 	}
 	printf("Finished examplegame code!\r\n");
 }
+
 
 //type is 0 for army, 1 for fleet, 2 for owner, 3 for supply
 //returns 0 on success, 1 on failure

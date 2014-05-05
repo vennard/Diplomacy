@@ -58,13 +58,13 @@ int printgame() {
         }
         if (g[k].supply != -2) printf("+supply ");
         switch (g[k].occupy_type) {
-            case -1 : printf("is not occupied.\r\n"); break;
+            case 2 : printf("is not occupied.\r\n"); break;
             case 0 : printf("is occupied by a troop "); break;  
             case 1 : printf("is occupied by a fleet "); break;
             default : break;
         }
         switch (g[k].player) {
-            case -1 : break;
+            case 4 : break;
             case 0 : printf("from Poland.\r\n"); break;  
             case 1 : printf("from Russia.\r\n"); break;
             case 2 : printf("from Sweden.\r\n"); break;
@@ -86,7 +86,7 @@ int supplycheck(){
     int i, j, k, old, diff;
     //first check for supply turnovers
     for (k = 0;k < 48;k++) {
-        if ((g[k].supply != g[k].player)&&(g[k].occupy_type != -1)) {
+        if ((g[k].supply != g[k].player)&&(g[k].occupy_type != 2)) {
             old = g[k].supply;
             g[k].supply = g[k].player;
             printf("Supply turnover from player %i to player %i (country %i)!\r\n", old, g[k].supply, k);
@@ -95,7 +95,7 @@ int supplycheck(){
     //check units vs. supplys
     for (i = 0;i < 4;i++) { //loop through players
         for (j = 0;j < 48;j++) { //look for players units
-            if ((g[j].player == i)&&(g[j].occupy_type != -1)) numunits++;
+            if ((g[j].player == i)&&(g[j].occupy_type != 2)) numunits++;
             if (g[j].supply == i) numsupplys++;
         }
         diff = numsupplys - numunits; 
@@ -198,7 +198,7 @@ int firstvalidate(void) {
     //    printf("ORDER %i: player - %i, type - %i, order - %i, country - %i, tcountry - %i, scountry - %i\r\n",i,p,t,or,c,tc,sc);
         if (o[i].valid == -1) continue; //marked as invalid duplicate 
        if (g[c].player != p) continue; //Player doesn't match 
-        if (g[c].occupy_type == -1) continue; //Region doesn't have unit
+        if (g[c].occupy_type == 2) continue; //Region doesn't have unit
         switch (or) {
             case 0 : //hold
                 validOrders++;
@@ -260,7 +260,7 @@ int firstvalidate(void) {
                 }
                 if ((t == 0)&&(g[sc].type == 2)) continue;
                 if ((t == 1)&&(g[sc].type == 0)) continue;
-                if (g[sc].occupy_type == -1) continue; 
+                if (g[sc].occupy_type == 2) continue; 
                 if (!isneighbor(sc,g[c].ncountrys)) continue; 
                 if (tc == -1) { //supporting a hold, convoy, or support
                    printf("#%i support hold | ",i);
@@ -330,8 +330,8 @@ int firstvalidate(void) {
 int moveunit(int c, int tc) {
     g[tc].player = g[c].player;
     g[tc].occupy_type = g[c].occupy_type; 
-    g[c].player = -1;
-    g[c].occupy_type = -1;
+    g[c].player = 4;
+    g[c].occupy_type = 2;
     return 0;
 }
 
@@ -340,7 +340,8 @@ int execute() {
     int k;
     printf("\r\n");
     for(k = 0;k < numO;k++) {
-        if((o[k].confirmed == 1)&&(o[k].valid == 1)) {
+        //if((o[k].confirmed == 1)&&(o[k].valid == 1)) {
+        if(o[k].valid == 1) {
             order_t co = o[k];
             switch (co.order) {
                 case 0 : 
@@ -383,6 +384,7 @@ int validate(int type) {
         }
     }
     order_t to,ro;
+    printf("type = %i, and num valid orders = %i!\r\n",type,count);
     for(k = 0;k < count;k++) {
         to = o[vo[k]];
         if (to.order != type) continue; //skip entries of incorrect order type
@@ -414,6 +416,7 @@ int validate(int type) {
                 }
                 break;
             case 1 : //move -- check for standoff moves (2 units to the same space)
+                printf("Enter evaluate move order!\r\n");
                 d = g[tc].dS;
                 a = g[c].aS;
                 check = 1;
@@ -549,7 +552,7 @@ int validate(int type) {
 int evaluate(){
     printf("Evaluating valid orders... ");
     int i;
-    clean(); //clean up all stats before evaluating
+    //clean(); //clean up all stats before evaluating
     for (i = 0;i < numO;i++) {
         if (o[i].valid == 1) {
             switch (o[i].order) {
@@ -591,7 +594,7 @@ int insertholds(){
     int check = 0;
     printf("Finding unordered units and assigning holds to countrys...");
     for (i = 0;i < 48;i++) {
-        if (g[i].occupy_type != -1) { //country is occupied  
+        if (g[i].occupy_type != 2) { //country is occupied  
             //search through orders    
             for (j = 0;j < numO;j++) {
                 //mark as found if there is a valid order for unit

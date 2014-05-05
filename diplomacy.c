@@ -77,12 +77,14 @@ int getorders(int mode, int seed, int numorders, char file[]) {
 //polling during waits for pause GPIO input
 int main() {
 	//TODO START OF THE TEST ZONE TODO 
-    //runspi();
-    demo();
+    //demo();
     //logo();
-    //fancystart();
-    //testcontroller();
+    //runspi();
 	//examplegame();
+    //fancystart();
+    //blink();
+    //testcontroller();
+    /*
     while(1);
     printf("hit enter to continue");
     char b[1];
@@ -96,6 +98,7 @@ int main() {
     	//runspi(); //TODO testing loop for SPI
     demo(); 
     while(1);
+    */
     //TODO END OF TEST ZONE TODO
     printf("Welcome to Diplomacy!\r\n");
     time(&timestart); //get start time
@@ -112,7 +115,18 @@ int main() {
             break;
     }
 
-    configurespi();
+    //runspi();
+    //fancystart();
+	//examplegame();
+    int i;
+    for(i = 0;i < 48;i++) {
+        writeregion(i);
+        usleep(2);
+    }
+    writeout();
+    //sleep(2);
+    runspi();
+    while(1);
     while (gameRunning) {
         printgame(); // debug print of game status
         printf("--------- Start of year %i ----------\r\n\r\n",year);

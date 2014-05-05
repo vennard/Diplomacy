@@ -17,6 +17,14 @@ int numValidOrders = 0;
 int arbitor() {
     int i;
 	printf("Starting the Arbitrator...\r\n");
+    printf("Printing orders: ");
+    for (i = 0;i < numO;i++) {
+        printf("order %i: player %i, order %i, country %i, tcountry %i!\r\n",i,o[i].player,o[i].order,o[i].country,o[i].tcountry);
+    }
+    printf("done!");
+
+        printf("hit enter to continue ");
+        int x = getchar();
     removeduplicates();
     numValidOrders = firstvalidate();
 	if (numValidOrders == -1) perror("first validate failed");
@@ -31,7 +39,10 @@ int arbitor() {
     validate(0);
 
     execute();
+    clearboard();
     for(i = 0;i < 48;i++) writeregion(i); //write out to gameboard
+    writeout();
+    printgame();
     clean();
     return 0;
 }
